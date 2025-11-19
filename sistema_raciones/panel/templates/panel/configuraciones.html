@@ -1,0 +1,39 @@
+{% extends "panel/base.html" %}
+
+{% block title %}Configuraciones{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Configuraciones</h1>
+
+<div class="card p-4 mb-3">
+    <h5>Notificaciones</h5>
+    <div class="form-check">
+        <input class="form-check-input" type="checkbox">
+        <label class="form-check-label">Alertas de stock</label>
+    </div>
+
+    <div class="form-check">
+        <input class="form-check-input" type="checkbox">
+        <label class="form-check-label">Notificar proyecciones</label>
+    </div>
+</div>
+
+<div class="card p-4 mb-3">
+    <h5>Ajustes del sistema</h5>
+
+    <div class="form-check">
+        <input class="form-check-input" type="checkbox">
+        <label class="form-check-label">Modo oscuro automático</label>
+    </div>
+
+    <div class="form-check">
+        <input class="form-check-input" type="checkbox">
+        <label class="form-check-label">Permitir descargas</label>
+    </div>
+</div>
+
+<div class="card p-4">
+    <h5>Usuario</h5>
+    <button class="btn btn-danger">Cerrar sesión</button>
+</div>
+{% endblock %}

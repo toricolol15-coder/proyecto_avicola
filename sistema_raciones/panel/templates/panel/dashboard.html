@@ -1,0 +1,79 @@
+{% extends "panel/base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Dashboard</h1>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-4">
+        <div class="card p-3">
+            <h6>Alerta: Algas</h6>
+            <small class="text-muted">Stock crítico</small>
+            <span class="badge bg-danger">2 días</span>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card p-3">
+            <h6>Alerta: Carbonato</h6>
+            <small class="text-muted">Stock bajo</small>
+            <span class="badge bg-warning">10%</span>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card p-3">
+            <h6>Último cálculo</h6>
+            <small class="text-muted">Ración diaria generada</small>
+            <span class="badge bg-success">OK</span>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-8">
+        <div class="card p-3">
+            <h6>Consumo vs Ahorro</h6>
+            <canvas id="mainChart" style="max-height:300px;"></canvas>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card p-3 mb-3">
+            <h6>Resumen</h6>
+            <p>Gallinas totales: <strong>420</strong></p>
+            <p>Ahorro estimado: <strong>18%</strong></p>
+            <p>Alertas activas: <strong>2</strong></p>
+        </div>
+
+        <div class="card p-3">
+            <h6>Acciones rápidas</h6>
+            <button class="btn btn-outline-primary btn-sm mb-2">Generar PDF</button>
+            <button class="btn btn-outline-secondary btn-sm mb-2">Exportar Excel</button>
+            <button class="btn btn-outline-success btn-sm">Calcular raciones</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    new Chart(document.getElementById('mainChart'), {
+        type: 'line',
+        data: {
+            labels: ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'],
+            datasets: [
+                { label:'Consumo (kg)', data:[120,115,130,128,122,125,118], tension:0.3 },
+                { label:'Ahorro (%)', data:[5,7,10,12,15,17,18], yAxisID:'y1', tension:0.3 }
+            ]
+        },
+        options: {
+            scales: {
+                y: { beginAtZero:true },
+                y1: { position:'right', beginAtZero:true, grid:{ drawOnChartArea:false } }
+            }
+        }
+    });
+</script>
+
+{% endblock %}
