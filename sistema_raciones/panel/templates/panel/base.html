@@ -84,13 +84,22 @@
 
         <h4 class="text-white mb-4 mt-4">Menú</h4>
 
-        <a class="sidebar-link" href="/dashboard/">📊 Dashboard</a>
-        <a class="sidebar-link" href="/raciones/">🍗 Raciones</a>
-        <a class="sidebar-link" href="/proyecciones/">📈 Proyecciones</a>
-        <a class="sidebar-link" href="/registros/">📚 Registros</a>
-        <a class="sidebar-link" href="/configuraciones/">⚙️ Configuraciones</a>
-        <hr class="text-white">
-        <a class="sidebar-link" href="/logout/">🔓 Cerrar sesión</a>
+        {% if user.is_authenticated %}
+
+            {% if user.is_superuser %}
+                <!-- SOLO ADMIN -->
+                <a class="sidebar-link" href="/dashboard/">📊 Dashboard</a>
+                <a class="sidebar-link" href="/proyecciones/">📈 Proyecciones</a>
+                <a class="sidebar-link" href="/registros/">📚 Registros</a>
+                <a class="sidebar-link" href="/configuraciones/">⚙️ Configuraciones</a>
+            {% endif %}
+
+            <!-- ADMIN + TRABAJADOR -->
+            <a class="sidebar-link" href="/raciones/">🍗 Raciones</a>
+            <hr class="text-white">
+            <a class="sidebar-link" href="/logout/">🔓 Cerrar sesión</a>
+
+        {% endif %}
     </div>
 
     <!-- CONTENIDO -->
