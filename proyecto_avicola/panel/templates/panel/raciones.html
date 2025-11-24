@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}Raciones - EcoRación{% endblock %}
+
+{% block content %}
+
+<h1 class="page-title mb-4">Calculadora de Raciones</h1>
+
+<div class="row g-4">
+
+    <!-- FORMULARIO -->
+    <div class="col-lg-7">
+        <form id="form-raciones">
+
+            <div class="row g-3 mb-3">
+
+                <!-- TIPO DE ANIMAL -->
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Tipo de animal</label>
+                    <div class="input-group">
+                        <select class="form-select" name="tipo_animal" required id="select-animal">
+                            <option value="">Seleccione...</option>
+                            <option value="Pollo">Pollo</option>
+                            <option value="Gallina de postura">Gallina de postura</option>
+                            <option value="Engorde">Engorde</option>
+                        </select>
+
+                        <!-- Botón para agregar animales -->
+                        <button type="button" class="btn btn-outline-primary" onclick="agregarAnimal()">
+                            +
+                        </button>
+                    </div>
+                </div>
+
+                <!-- PESO -->
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Peso del animal</label>
+                    <div class="input-group">
+                        <input type="number" class="form-control" name="peso" min="1" step="0.1" required>
+                        <span class="input-group-text">kg</span>
+                    </div>
+                </div>
+
+                <!-- GRANOS -->
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Granos consumidos diariamente</label>
+                    <div class="input-group">
+                        <input type="number" class="form-control" name="granos" min="1" step="0.1" required>
+                        <span class="input-group-text">g / día</span>
+                    </div>
+                </div>
+
+                <!-- ALGAS -->
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Algas consumidas diariamente</label>
+                    <div class="input-group">
+                        <input type="number" class="form-control" name="algas" min="0" step="0.1" required>
+                        <span class="input-group-text">g / día</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- SELECCIÓN DE DÍAS -->
+            <label class="form-label fw-bold">Días de alimentación</label>
+            <div class="week-selector mb-3">
+
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" name="dias" value="Lunes">
+                    <label class="form-check-label">L</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" name="dias" value="Martes">
+                    <label class="form-check-label">M</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" name="dias" value="Miércoles">
+                    <label class="form-check-label">X</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" name="dias" value="Jueves">
+                    <label class="form-check-label">J</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" name="dias" value="Viernes">
+                    <label class="form-check-label">V</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" name="dias" value="Sábado">
+                    <label class="form-check-label">S</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" name="dias" value="Domingo">
+                    <label class="form-check-label">D</label>
+                </div>
+
+            </div>
+
+            <!-- BOTÓN -->
+            <button type="submit" class="btn btn-ecoracion w-100">CALCULAR</button>
+
+        </form>
+    </div>
+
+    <!-- RESULTADOS -->
+    <div class="col-lg-5">
+        <div class="card shadow-sm p-3">
+            <h5 class="mb-3 text-center">Resultados</h5>
+
+            <p class="mb-1 fw-bold">Tipo de animal:</p>
+            <div class="result-highlight" id="resultado-animal">—</div>
+
+            <p class="mb-1 fw-bold mt-3">Peso del animal:</p>
+            <div class="result-highlight" id="resultado-peso">—</div>
+
+            <p class="mb-1 fw-bold mt-3">Granos consumidos:</p>
+            <div class="result-highlight" id="resultado-granos">—</div>
+
+            <p class="mb-1 fw-bold mt-3">Algas consumidas:</p>
+            <div class="result-highlight" id="resultado-algas">—</div>
+
+            <p class="mb-1 fw-bold mt-3">Ración diaria total:</p>
+            <div class="result-highlight" id="racion-diaria">—</div>
+
+            <p class="mb-1 fw-bold mt-3">Ahorro estimado:</p>
+            <div class="result-highlight result-highlight-green" id="ahorro">—</div>
+        </div>
+    </div>
+
+</div>
+
+<!-- JS -->
+<script>
+function agregarAnimal() {
+    let nuevo = prompt("Ingrese el nombre del nuevo animal:");
+
+    if (nuevo && nuevo.trim() !== "") {
+        const select = document.getElementById("select-animal");
+        const option = document.createElement("option");
+        option.value = nuevo;
+        option.textContent = nuevo;
+        select.appendChild(option);
+        select.value = nuevo;
+    }
+}
+
+document.getElementById("form-raciones").addEventListener("submit", function(e){
+    e.preventDefault();
+
+    let animal = document.querySelector("[name='tipo_animal']").value;
+    let peso = parseFloat(document.querySelector("[name='peso']").value);
+    let granos = parseFloat(document.querySelector("[name='granos']").value);
+    let algas = parseFloat(document.querySelector("[name='algas']").value);
+
+    let racion = granos + algas;
+    let ahorro = 15;
+
+    document.getElementById("resultado-animal").innerText = animal;
+    document.getElementById("resultado-peso").innerText = peso + " kg";
+    document.getElementById("resultado-granos").innerText = granos + " g";
+    document.getElementById("resultado-algas").innerText = algas + " g";
+    document.getElementById("racion-diaria").innerText = racion + " g";
+    document.getElementById("ahorro").innerText = ahorro + "%";
+});
+</script>
+
+{% endblock %}

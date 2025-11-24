@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Registros de Raciones - EcoRación{% endblock %}
+
+{% block content %}
+
+<h1 class="page-title mb-4">Registros de Raciones</h1>
+
+<div class="card shadow-sm p-4">
+
+    <h5 class="mb-3">Listado de raciones generadas</h5>
+
+    <table class="table table-striped align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>Tipo de animal</th>
+                <th>Peso (kg)</th>
+                <th>Granos diarios</th>
+                <th>Algas diarias</th>
+                <th>Días alimentados</th>
+                <th style="width: 150px;">Acciones</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            <!-- EJEMPLO — Estos datos vendrán desde Django -->
+            <tr>
+                <td>Gallina de postura</td>
+                <td>2.1 kg</td>
+                <td>120 g</td>
+                <td>30 g</td>
+                <td>L - M - X - J - V</td>
+                <td>
+                    <button class="btn btn-sm btn-primary">Ver / Editar</button>
+                    <button class="btn btn-sm btn-danger">Eliminar</button>
+                </td>
+            </tr>
+
+            <tr>
+                <td>Pollo</td>
+                <td>1.5 kg</td>
+                <td>90 g</td>
+                <td>20 g</td>
+                <td>L - M - J - S</td>
+                <td>
+                    <button class="btn btn-sm btn-primary">Ver / Editar</button>
+                    <button class="btn btn-sm btn-danger">Eliminar</button>
+                </td>
+            </tr>
+
+            <!-- Aquí Django insertará los registros reales -->
+        </tbody>
+    </table>
+
+</div>
+
+{% endblock %}

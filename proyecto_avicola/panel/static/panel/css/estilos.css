@@ -1,0 +1,366 @@
+/* =========================================================
+   PALETA Y ESTILOS GENERALES
+   ========================================================= */
+
+body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background-color: #f4f5f7;
+    margin: 0;
+}
+
+:root {
+    --green-dark: #064420;
+    --green-main: #0d8b3c;
+    --green-soft: #e6f4ea;
+    --text-main: #111827;
+    --text-muted: #6b7280;
+    --border-soft: #e5e7eb;
+    --danger: #dc2626;
+    --warning: #f59e0b;
+}
+
+/* Card blanca principal del panel */
+.card-main {
+    background-color: #ffffff;
+    border-radius: 18px;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+    padding: 24px;
+}
+
+/* Títulos de página dentro del panel */
+.page-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 18px;
+    color: var(--text-main);
+}
+
+/* Botón verde reutilizable */
+.btn-ecoracion {
+    background-color: var(--green-main);
+    border-color: var(--green-main);
+    font-weight: 600;
+}
+
+.btn-ecoracion:hover {
+    background-color: #0b6e2f;
+    border-color: #0b6e2f;
+}
+
+/* =========================================================
+   LOGIN / REGISTRO
+   (Primeras dos imágenes)
+   ========================================================= */
+
+.auth-wrapper {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #e5f3ea; /* fondo verdecito */
+}
+
+.auth-card {
+    width: 360px;
+    background-color: #ffffff;
+    border-radius: 18px;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.15);
+    padding: 28px 32px;
+}
+
+.auth-title {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--green-dark);
+    text-align: center;
+    margin-bottom: 4px;
+}
+
+.auth-subtitle {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--green-main);
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.auth-subtitle-icon {
+    font-size: 20px;
+}
+
+.auth-footer-link {
+    text-align: center;
+    margin-top: 12px;
+    font-size: 14px;
+}
+
+.auth-footer-link a {
+    color: var(--green-main);
+    text-decoration: none;
+}
+
+.auth-footer-link a:hover {
+    text-decoration: underline;
+}
+
+/* =========================================================
+   LAYOUT DEL PANEL (SIDEBAR + CONTENIDO)
+   (Todas las pantallas interiores)
+   ========================================================= */
+
+.layout-wrapper {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* Sidebar izquierdo */
+.sidebar {
+    width: 230px;
+    background-color: var(--green-dark);
+    color: #ffffff;
+    padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 24px;
+}
+
+.sidebar-logo-icon {
+    width: 26px;
+    height: 26px;
+    border-radius: 999px;
+    border: 2px solid #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+}
+
+.sidebar-logo-text {
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.sidebar-menu {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+.sidebar-menu li {
+    margin-bottom: 6px;
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    color: #e5e7eb;
+    font-size: 14px;
+    text-decoration: none;
+}
+
+.sidebar-link:hover {
+    background-color: rgba(209, 250, 229, 0.1);
+    color: #ffffff;
+}
+
+.sidebar-link.active {
+    background-color: #0d8b3c;
+    color: #ffffff;
+}
+
+/* Contenido principal a la derecha */
+.main-content {
+    flex: 1;
+    padding: 24px 32px;
+}
+
+/* =========================================================
+   DASHBOARD
+   (Tercera imagen: métricas, gráfico, alertas)
+   ========================================================= */
+
+.metric-card {
+    border-radius: 14px;
+    padding: 16px;
+    background-color: var(--green-dark);
+    color: #ffffff;
+    height: 100%;
+}
+
+.metric-card h6 {
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+.metric-card span {
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.metric-card-secondary {
+    background-color: #0f766e;
+}
+
+/* Tarjeta de alertas de stock */
+.alerta-stock-card {
+    border-radius: 14px;
+    padding: 16px;
+    background-color: #fef2f2;
+    border: 1px solid #fecaca;
+}
+
+.alerta-stock-card h6 {
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+.alerta-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 14px;
+    margin-bottom: 6px;
+}
+
+.alerta-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.alerta-icon-danger {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background-color: var(--danger);
+}
+
+.alerta-icon-warning {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background-color: var(--warning);
+}
+
+/* =========================================================
+   RACIONES
+   (Cuarta imagen: calculadora de raciones)
+   ========================================================= */
+
+.result-highlight {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.result-highlight-green {
+    color: var(--green-main);
+}
+
+/* Puedes usar .result-highlight y .result-highlight-green
+   en raciones.html para "Ración diaria" y "Ahorro estimado". */
+
+/* =========================================================
+   PROYECCIONES
+   (Quinta imagen: proyecciones, insumos, exportar)
+   ========================================================= */
+
+/* Nada especial extra: reutiliza .card, .btn-ecoracion y .result-highlight-green.
+   Si quieres separar visualmente, puedes usar: */
+
+.proyeccion-panel {
+    border-radius: 14px;
+    border: 1px solid var(--border-soft);
+    padding: 16px;
+}
+
+/* =========================================================
+   REGISTROS
+   (Sexta imagen: tabla de usuarios)
+   ========================================================= */
+
+.table-ecoracion {
+    background-color: #ffffff;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.table-ecoracion thead {
+    background-color: var(--green-soft);
+}
+
+.table-ecoracion thead th {
+    border-bottom: none;
+    font-weight: 600;
+}
+
+.table-ecoracion tbody td {
+    vertical-align: middle;
+}
+
+.icon-delete {
+    color: var(--danger);
+    cursor: pointer;
+    font-size: 18px;
+}
+
+/* =========================================================
+   CONFIGURACIONES
+   (Séptima imagen: switches y tabla pequeña + botón guardar)
+   ========================================================= */
+
+/* Switch de tipo ON/OFF */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 42px;
+    height: 22px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background-color: #d1d5db;
+    transition: .2s;
+    border-radius: 999px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .2s;
+    border-radius: 50%;
+}
+
+.switch input:checked + .slider {
+    background-color: var(--green-main);
+}
+
+.switch input:checked + .slider:before {
+    transform: translateX(18px);
+}

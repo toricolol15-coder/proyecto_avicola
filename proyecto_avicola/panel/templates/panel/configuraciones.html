@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+
+{% block title %}Configuración - EcoRación{% endblock %}
+
+{% block content %}
+
+<h1 class="page-title">Configuración del Sistema</h1>
+
+<form method="POST">
+    {% csrf_token %}
+    
+    <div class="row g-4">
+
+        <!-- ============================
+            COLUMNA IZQUIERDA (Opciones)
+        ============================= -->
+        <div class="col-lg-6">
+
+            <!-- Activar / Desactivar Notificaciones -->
+            <div class="mb-3 d-flex justify-content-between align-items-center">
+                <span>Notificaciones del sistema</span>
+                <label class="switch">
+                    <input type="checkbox" name="notificaciones" {% if config.notificaciones %}checked{% endif %}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <!-- Alertas por baja producción -->
+            <div class="mb-3 d-flex justify-content-between align-items-center">
+                <span>Alertas de producción baja</span>
+                <label class="switch">
+                    <input type="checkbox" name="alertas" {% if config.alertas %}checked{% endif %}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <!-- Auto actualización -->
+            <div class="mb-3 d-flex justify-content-between align-items-center">
+                <span>Auto-actualizar datos</span>
+                <label class="switch">
+                    <input type="checkbox" name="auto_actualizar" {% if config.auto_actualizar %}checked{% endif %}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <!-- MODO OSCURO -->
+            <div class="mb-4 d-flex justify-content-between align-items-center">
+                <span>Modo oscuro</span>
+                <label class="switch">
+                    <input type="checkbox" name="modo_oscuro" {% if config.modo_oscuro %}checked{% endif %}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <!-- CAMBIO DE IDIOMA -->
+            <div class="mb-4">
+                <label class="form-label">Idioma del sistema</label>
+                <select class="form-select" name="idioma">
+                    <option value="es" {% if config.idioma == 'es' %}selected{% endif %}>Español</option>
+                    <option value="en" {% if config.idioma == 'en' %}selected{% endif %}>Inglés</option>
+                </select>
+            </div>
+
+            <!-- VER PERFIL -->
+            <a href="{% url 'perfil_usuario' %}" class="btn btn-outline-secondary w-100 mb-4">
+                Ver perfil del usuario
+            </a>
+
+        </div>
+
+        <!-- ============================
+            COLUMNA DERECHA (Usuarios)
+        ============================= -->
+        <div class="col-lg-6">
+            <h6>Usuarios con acceso</h6>
+            <table class="table table-ecoracion mb-3">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Usuario</th>
+                        <th>Correo electrónico</th>
+                        <th style="width:70px;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in usuarios %}
+                    <tr>
+                        <td>{{ u.first_name }}</td>
+                        <td>{{ u.username }}</td>
+                        <td>{{ u.email }}</td>
+                        <td><span class="icon-delete">🗑️</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <!-- BOTÓN GUARDAR -->
+    <div class="mt-3">
+        <button class="btn btn-ecoracion">Guardar cambios</button>
+    </div>
+
+</form>
+
+{% endblock %}

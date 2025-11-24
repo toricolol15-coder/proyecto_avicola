@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+
+{% block title %}Proyecciones - EcoRación{% endblock %}
+
+{% block content %}
+
+<h1 class="page-title mb-4">Proyección de Insumos</h1>
+
+<div class="row g-4">
+
+    <!-- FORMULARIO -->
+    <div class="col-lg-7">
+
+        <div class="card shadow-sm p-4 mb-3">
+            <form id="form-proyecciones">
+
+                <!-- SELECCIONAR RACIÓN PREVIA -->
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Ración base para la proyección</label>
+                    <select class="form-select" name="racion_id" required>
+                        <option value="">Seleccione una ración guardada...</option>
+
+                        <!-- EJEMPLO — Django generará estas opciones -->
+                        <option value="1">Gallina Postura - 2.1 kg - 120 g granos</option>
+                        <option value="2">Pollo - 1.5 kg - 90 g granos</option>
+
+                    </select>
+                </div>
+
+                <!-- CANTIDAD DE ANIMALES -->
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Número de animales</label>
+                    <input type="number" class="form-control" name="cantidad" min="1" required>
+                </div>
+
+                <!-- PERIODO -->
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Periodo de proyección</label>
+                    <div class="input-group">
+                        <input type="number" class="form-control" name="periodo" min="1" required>
+                        <select class="form-select" name="unidad_periodo">
+                            <option value="dias">Días</option>
+                            <option value="semanas">Semanas</option>
+                            <option value="meses">Meses</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- BOTON -->
+                <button type="submit" class="btn btn-ecoracion w-100">Generar proyección</button>
+            </form>
+        </div>
+
+        <!-- RESULTADOS -->
+        <div class="card shadow-sm p-4" id="resultados" style="display:none;">
+            <h5 class="mb-3">Resultados de la proyección</h5>
+
+            <p class="mb-1">Granos requeridos: <strong id="res-granos"></strong></p>
+            <p class="mb-1">Algas requeridas: <strong id="res-algas"></strong></p>
+            <p class="mb-1">Carbonato requerido: <strong id="res-carbonato"></strong></p>
+
+            <hr>
+
+            <p class="mb-1">Consumo optimizado (15% menos):  
+                <strong class="result-highlight-green" id="res-optimizado"></strong>
+            </p>
+
+            <p class="mb-0">Ahorro total estimado:  
+                <strong class="result-highlight-green" id="res-ahorro"></strong>
+            </p>
+        </div>
+
+    </div>
+
+    <!-- EXPORTACIONES + GRAFICO -->
+    <div class="col-lg-5 d-flex flex-column gap-3">
+
+        <!-- GRÁFICO (placeholder) -->
+        <div class="card shadow-sm p-4 text-center">
+            <h6 class="mb-2">Distribución de insumos</h6>
+            <div style="height: 250px; background: #f5f5f5; border-radius: 8px; display:flex; align-items:center; justify-content:center;">
+                <span class="text-muted">Aquí irá un gráfico circular</span>
+            </div>
+        </div>
+
+        <!-- BOTONES DE EXPORTACIÓN -->
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-outline-secondary flex-fill">Exportar PDF</button>
+            <button type="button" class="btn btn-ecoracion flex-fill">Exportar Excel</button>
+        </div>
+
+    </div>
+</div>
+
+<!-- SCRIPT BÁSICO: luego lo conectamos a Django -->
+<script>
+document.getElementById("form-proyecciones").addEventListener("submit", function(e){
+    e.preventDefault();
+
+    let cantidad = parseFloat(document.querySelector("[name='cantidad']").value);
+    let periodo = parseFloat(document.querySelector("[name='periodo']").value);
+    let unidad = document.querySelector("[name='unidad_periodo']").value;
+
+    // Convertir semanas/meses a días
+    if(unidad === "semanas") periodo = periodo * 7;
+    if(unidad === "meses") periodo = periodo * 30;
+
+    // EJEMPLO: datos fijos (luego los carga Django desde DB)
+    let granos_diarios = 120; 
+    let algas_diarias = 30;
+    let carbonato_diario = 12;
+
+    let total_granos = granos_diarios * cantidad * periodo / 1000;
+    let total_algas = algas_diarias * cantidad * periodo / 1000;
+    let total_carbonato = carbonato_diario * cantidad * periodo / 1000;
+
+    let consumo_total = total_granos + total_algas + total_carbonato;
+    let consumo_opt = consumo_total * 0.85;
+    let ahorro = consumo_total - consumo_opt;
+
+    document.getElementById("res-granos").innerText = total_granos.toFixed(2) + " kg";
+    document.getElementById("res-algas").innerText = total_algas.toFixed(2) + " kg";
+    document.getElementById("res-carbonato").innerText = total_carbonato.toFixed(2) + " kg";
+    document.getElementById("res-optimizado").innerText = consumo_opt.toFixed(2) + " kg";
+    document.getElementById("res-ahorro").innerText = ahorro.toFixed(2) + " kg";
+
+    document.getElementById("resultados").style.display = "block";
+});
+</script>
+
+{% endblock %}

@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+{% block content %}
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        transition: background 0.3s, color 0.3s;
+    }
+
+    /* Contenedor general */
+    .perfil-container {
+        max-width: 600px;
+        margin: 30px auto;
+        background: var(--card-bg);
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 0 12px rgba(0,0,0,0.1);
+        transition: background 0.3s;
+    }
+
+    /* Encabezado */
+    .perfil-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .perfil-header h2 {
+        margin: 0;
+    }
+
+    /* Datos */
+    .perfil-dato {
+        margin: 12px 0;
+        padding: 12px;
+        border-radius: 8px;
+        background: var(--item-bg);
+    }
+
+    /* Botón volver */
+    .btn-volver {
+        display: inline-block;
+        margin-top: 20px;
+        padding: 12px 20px;
+        text-decoration: none;
+        background: #4a90e2;
+        color: white;
+        border-radius: 8px;
+        font-weight: bold;
+        transition: background 0.3s, transform 0.2s;
+    }
+
+    .btn-volver:hover {
+        background: #357ac9;
+        transform: scale(1.03);
+    }
+
+    /* Modo oscuro */
+    :root {
+        --bg: #f5f5f5;
+        --text: #000;
+        --card-bg: #ffffff;
+        --item-bg: #f0f0f0;
+    }
+
+    body.dark-mode {
+        --bg: #121212;
+        --text: #ffffff;
+        --card-bg: #1f1f1f;
+        --item-bg: #292929;
+    }
+
+    body {
+        background: var(--bg);
+        color: var(--text);
+    }
+
+    /* Toggle Dark Mode */
+    .modo-oscuro-toggle {
+        cursor: pointer;
+        background: #444;
+        color: white;
+        padding: 8px 14px;
+        border-radius: 8px;
+        transition: 0.3s;
+    }
+
+    .modo-oscuro-toggle:hover {
+        background: #333;
+    }
+
+</style>
+
+<div class="perfil-container">
+
+    <div class="perfil-header">
+        <h2>Perfil del Usuario</h2>
+
+        <!-- Botón activar/desactivar modo oscuro -->
+        <div class="modo-oscuro-toggle" onclick="toggleModoOscuro()">
+            🌙 Modo oscuro
+        </div>
+    </div>
+
+    <div class="perfil-dato"><strong>Nombre de usuario:</strong> {{ user.username }}</div>
+    <div class="perfil-dato"><strong>Correo electrónico:</strong> {{ user.email }}</div>
+    <div class="perfil-dato"><strong>Nombres:</strong> {{ user.first_name }}</div>
+    <div class="perfil-dato"><strong>Apellidos:</strong> {{ user.last_name }}</div>
+
+    <!-- Botón volver -->
+    <a href="{% url 'configuraciones' %}" class="btn-volver">⬅ Volver</a>
+
+</div>
+
+<script>
+    function toggleModoOscuro() {
+        document.body.classList.toggle("dark-mode");
+    }
+</script>
+
+{% endblock %}
