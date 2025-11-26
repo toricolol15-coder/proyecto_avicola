@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2 class="mb-3">Raciones registradas</h2>
+
+<a class="btn btn-success mb-3" href="{% url 'crear_racion' %}">
+    ➕ Crear nueva ración
+</a>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Lote</th>
+            <th>Fecha</th>
+            <th>Total (kg)</th>
+            <th>Algas (%)</th>
+            <th>Carbonato (%)</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for r in raciones %}
+        <tr>
+            <td>{{ r.id }}</td>
+            <td>{{ r.lote.nombre_lote }}</td>
+            <td>{{ r.fecha_calculo }}</td>
+            <td>{{ r.cantidad_total_kg }}</td>
+            <td>{{ r.porcentaje_algas }}</td>
+            <td>{{ r.porcentaje_carbonato }}</td>
+            <td>
+                <a class="btn btn-warning btn-sm" href="{% url 'editar_racion' r.id %}">Editar</a>
+                <a class="btn btn-danger btn-sm"
+                   onclick="return confirm('¿Eliminar esta ración?')"
+                   href="{% url 'eliminar_racion' r.id %}">
+                   Eliminar
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

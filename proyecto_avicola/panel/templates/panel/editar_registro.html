@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Registro{% endblock %}
+
+{% block content %}
+
+<h1 class="page-title mb-4">Editar Registro</h1>
+
+<div class="card p-4 shadow-sm">
+
+<form method="POST">
+    {% csrf_token %}
+
+    <div class="mb-3">
+        <label class="form-label">Tipo de animal</label>
+        <input type="text" name="tipo_animal" class="form-control" value="{{ registro.tipo_animal }}" required>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Peso (kg)</label>
+        <input type="number" step="0.01" name="peso" class="form-control" value="{{ registro.peso }}" required>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Granos diarios</label>
+        <input type="number" step="0.01" name="granos" class="form-control" value="{{ registro.granos }}" required>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Algas diarias</label>
+        <input type="number" step="0.01" name="algas" class="form-control" value="{{ registro.algas }}" required>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Días alimentados</label>
+        <input type="text" name="dias" class="form-control" value="{{ registro.dias }}" required>
+    </div>
+
+    <button class="btn btn-success">Guardar cambios</button>
+    <a href="{% url 'registros' %}" class="btn btn-secondary">Volver</a>
+
+</form>
+
+</div>
+
+{% endblock %}

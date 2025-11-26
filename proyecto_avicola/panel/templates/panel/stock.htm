@@ -1,0 +1,43 @@
+{% extends 'panel/base.html' %}
+
+{% block title %}Stock{% endblock %}
+
+{% block content %}
+<h2>Stock de Insumos</h2>
+
+{% if insumos %}
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Insumo</th>
+            <th>Stock Actual</th>
+            <th>Stock Mínimo</th>
+            <th>Unidad</th>
+            <th>Alerta</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for nombre, datos in insumos.items %}
+        <tr>
+            <td>{{ nombre }}</td>
+            <td>{{ datos.stock_actual }}</td>
+            <td>{{ datos.stock_minimo }}</td>
+            <td>{{ datos.unidad }}</td>
+            <td>
+                {% if datos.nivel_alerta == "CRITICO" %}
+                    <span class="badge bg-danger">Crítico</span>
+                {% elif datos.nivel_alerta == "BAJO" %}
+                    <span class="badge bg-warning text-dark">Bajo</span>
+                {% else %}
+                    <span class="badge bg-success">OK</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No hay insumos registrados.</p>
+{% endif %}
+
+{% endblock %}

@@ -1,3 +1,4 @@
+
 {% load static %}
 <!DOCTYPE html>
 <html lang="es">
@@ -18,14 +19,37 @@
             <div class="sidebar-logo-text">EcoRación</div>
         </div>
 
+        <!-- STOCK DINÁMICO -->
+        <div class="sidebar-stock p-2 mb-2">
+            {% if insumos %}
+                <h6 class="mb-1">Stock Actual</h6>
+                <ul class="list-unstyled">
+                    {% for nombre, datos in insumos.items %}
+                        <li class="d-flex justify-content-between align-items-center mb-1">
+                            <span>{{ nombre|capfirst }}: {{ datos.stock_actual }} {{ datos.unidad }}</span>
+                            {% if datos.nivel_alerta == "CRITICO" %}
+                                <span class="badge bg-danger">Crítico</span>
+                            {% elif datos.nivel_alerta == "BAJO" %}
+                                <span class="badge bg-warning text-dark">Bajo</span>
+                            {% else %}
+                                <span class="badge bg-success">OK</span>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+
         <ul class="sidebar-menu">
             <li><a href="{% url 'dashboard' %}" class="sidebar-link {% if request.path == '/dashboard/' %}active{% endif %}">Inicio</a></li>
             <li><a href="{% url 'raciones' %}" class="sidebar-link {% if request.path == '/raciones/' %}active{% endif %}">Raciones</a></li>
+
             <li><a href="{% url 'registros' %}" class="sidebar-link {% if request.path == '/registros/' %}active{% endif %}">Registros</a></li>
+
             <li><a href="{% url 'proyecciones' %}" class="sidebar-link {% if request.path == '/proyecciones/' %}active{% endif %}">Proyecciones</a></li>
             <li><span class="sidebar-link">Reportes</span></li>
             <li><a href="{% url 'configuraciones' %}" class="sidebar-link {% if request.path == '/configuraciones/' %}active{% endif %}">Configuración</a></li>
-             <li><a href="{% url 'logout' %}" class="sidebar-link">Cerrar sesión</a></li>
+            <li><a href="{% url 'logout' %}" class="sidebar-link">Cerrar sesión</a></li>
         </ul>
     </aside>
 

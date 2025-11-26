@@ -1,6 +1,5 @@
 {% extends "base.html" %}
 
-
 {% block title %}Proyecciones - EcoRación{% endblock %}
 
 {% block content %}
@@ -20,11 +19,9 @@
                     <label class="form-label fw-bold">Ración base para la proyección</label>
                     <select class="form-select" name="racion_id" required>
                         <option value="">Seleccione una ración guardada...</option>
-
-                        <!-- EJEMPLO — Django generará estas opciones -->
-                        <option value="1">Gallina Postura - 2.1 kg - 120 g granos</option>
-                        <option value="2">Pollo - 1.5 kg - 90 g granos</option>
-
+                        {% for r in raciones %}
+                            <option value="{{ r.id }}">{{ r.descripcion }}</option>
+                        {% endfor %}
                     </select>
                 </div>
 
@@ -106,7 +103,7 @@ document.getElementById("form-proyecciones").addEventListener("submit", function
     if(unidad === "semanas") periodo = periodo * 7;
     if(unidad === "meses") periodo = periodo * 30;
 
-    // EJEMPLO: datos fijos (luego los carga Django desde DB)
+    // Datos de ejemplo (puedes reemplazar con los datos de la ración seleccionada)
     let granos_diarios = 120; 
     let algas_diarias = 30;
     let carbonato_diario = 12;

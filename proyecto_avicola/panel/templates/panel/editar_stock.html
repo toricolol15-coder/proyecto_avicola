@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Insumo - EcoRación{% endblock %}
+
+{% block content %}
+<h1 class="page-title mb-4">Editar Insumo</h1>
+
+<div class="card shadow-sm p-4">
+    <form method="POST">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label>Nombre</label>
+            <input type="text" name="nombre" class="form-control" value="{{ insumo.nombre }}" required>
+        </div>
+        <div class="mb-3">
+            <label>Stock Actual</label>
+            <input type="number" step="0.01" name="stock_actual" class="form-control" value="{{ insumo.stock_actual }}" required>
+        </div>
+        <div class="mb-3">
+            <label>Stock Mínimo</label>
+            <input type="number" step="0.01" name="stock_minimo" class="form-control" value="{{ insumo.stock_minimo }}" required>
+        </div>
+        <button type="submit" class="btn btn-ecoracion">Guardar cambios</button>
+    </form>
+</div>
+{% endblock %}

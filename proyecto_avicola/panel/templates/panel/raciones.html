@@ -3,7 +3,6 @@
 {% block title %}Raciones - EcoRación{% endblock %}
 
 {% block content %}
-
 <h1 class="page-title mb-4">Calculadora de Raciones</h1>
 
 <div class="row g-4">
@@ -11,10 +10,8 @@
     <!-- FORMULARIO -->
     <div class="col-lg-7">
         <form id="form-raciones">
-
             <div class="row g-3 mb-3">
-
-                <!-- TIPO DE ANIMAL -->
+                <!-- Tipo de animal -->
                 <div class="col-md-6">
                     <label class="form-label fw-bold">Tipo de animal</label>
                     <div class="input-group">
@@ -24,15 +21,11 @@
                             <option value="Gallina de postura">Gallina de postura</option>
                             <option value="Engorde">Engorde</option>
                         </select>
-
-                        <!-- Botón para agregar animales -->
-                        <button type="button" class="btn btn-outline-primary" onclick="agregarAnimal()">
-                            +
-                        </button>
+                        <button type="button" class="btn btn-outline-primary" onclick="agregarAnimal()">+</button>
                     </div>
                 </div>
 
-                <!-- PESO -->
+                <!-- Peso -->
                 <div class="col-md-6">
                     <label class="form-label fw-bold">Peso del animal</label>
                     <div class="input-group">
@@ -41,7 +34,7 @@
                     </div>
                 </div>
 
-                <!-- GRANOS -->
+                <!-- Granos -->
                 <div class="col-md-6">
                     <label class="form-label fw-bold">Granos consumidos diariamente</label>
                     <div class="input-group">
@@ -50,7 +43,7 @@
                     </div>
                 </div>
 
-                <!-- ALGAS -->
+                <!-- Algas -->
                 <div class="col-md-6">
                     <label class="form-label fw-bold">Algas consumidas diariamente</label>
                     <div class="input-group">
@@ -58,47 +51,20 @@
                         <span class="input-group-text">g / día</span>
                     </div>
                 </div>
-
             </div>
 
-            <!-- SELECCIÓN DE DÍAS -->
+            <!-- Selección de días -->
             <label class="form-label fw-bold">Días de alimentación</label>
             <div class="week-selector mb-3">
-
+                {% for dia, letra in dias %}
                 <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="checkbox" name="dias" value="Lunes">
-                    <label class="form-check-label">L</label>
+                    <input class="form-check-input" type="checkbox" name="dias" value="{{ dia }}">
+                    <label class="form-check-label">{{ letra }}</label>
                 </div>
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="checkbox" name="dias" value="Martes">
-                    <label class="form-check-label">M</label>
-                </div>
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="checkbox" name="dias" value="Miércoles">
-                    <label class="form-check-label">X</label>
-                </div>
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="checkbox" name="dias" value="Jueves">
-                    <label class="form-check-label">J</label>
-                </div>
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="checkbox" name="dias" value="Viernes">
-                    <label class="form-check-label">V</label>
-                </div>
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="checkbox" name="dias" value="Sábado">
-                    <label class="form-check-label">S</label>
-                </div>
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="checkbox" name="dias" value="Domingo">
-                    <label class="form-check-label">D</label>
-                </div>
-
+                {% endfor %}
             </div>
 
-            <!-- BOTÓN -->
             <button type="submit" class="btn btn-ecoracion w-100">CALCULAR</button>
-
         </form>
     </div>
 
@@ -106,22 +72,16 @@
     <div class="col-lg-5">
         <div class="card shadow-sm p-3">
             <h5 class="mb-3 text-center">Resultados</h5>
-
             <p class="mb-1 fw-bold">Tipo de animal:</p>
             <div class="result-highlight" id="resultado-animal">—</div>
-
             <p class="mb-1 fw-bold mt-3">Peso del animal:</p>
             <div class="result-highlight" id="resultado-peso">—</div>
-
             <p class="mb-1 fw-bold mt-3">Granos consumidos:</p>
             <div class="result-highlight" id="resultado-granos">—</div>
-
             <p class="mb-1 fw-bold mt-3">Algas consumidas:</p>
             <div class="result-highlight" id="resultado-algas">—</div>
-
             <p class="mb-1 fw-bold mt-3">Ración diaria total:</p>
             <div class="result-highlight" id="racion-diaria">—</div>
-
             <p class="mb-1 fw-bold mt-3">Ahorro estimado:</p>
             <div class="result-highlight result-highlight-green" id="ahorro">—</div>
         </div>
@@ -129,11 +89,9 @@
 
 </div>
 
-<!-- JS -->
 <script>
 function agregarAnimal() {
     let nuevo = prompt("Ingrese el nombre del nuevo animal:");
-
     if (nuevo && nuevo.trim() !== "") {
         const select = document.getElementById("select-animal");
         const option = document.createElement("option");
@@ -144,7 +102,7 @@ function agregarAnimal() {
     }
 }
 
-document.getElementById("form-raciones").addEventListener("submit", function(e){
+document.getElementById("form-raciones").addEventListener("submit", async function(e){
     e.preventDefault();
 
     let animal = document.querySelector("[name='tipo_animal']").value;
@@ -161,6 +119,21 @@ document.getElementById("form-raciones").addEventListener("submit", function(e){
     document.getElementById("resultado-algas").innerText = algas + " g";
     document.getElementById("racion-diaria").innerText = racion + " g";
     document.getElementById("ahorro").innerText = ahorro + "%";
+
+    const formData = new FormData();
+    formData.append("tipo_animal", animal);
+    formData.append("peso", peso);
+    formData.append("granos", granos);
+    formData.append("algas", algas);
+    document.querySelectorAll("[name='dias']:checked").forEach(d => formData.append("dias", d.value));
+
+    const response = await fetch("{% url 'guardar_racion' %}", {
+        method: "POST",
+        body: formData,
+        headers: { "X-CSRFToken": "{{ csrf_token }}" }
+    });
+    const result = await response.json();
+    console.log("Guardado en DB con ID:", result.id);
 });
 </script>
 
