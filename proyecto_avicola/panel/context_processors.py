@@ -5,6 +5,7 @@ def stock_summary(request):
     """Context processor que agrega un resumen de insumos y alertas de stock."""
     insumos_qs = Insumo.objects.all()
     insumos = {}
+    alertas_stock = []
 
     for ins in insumos_qs:
         # calcular nivel de alerta
