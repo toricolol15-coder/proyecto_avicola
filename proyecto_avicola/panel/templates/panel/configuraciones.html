@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "panel/base.html" %}
 
 
 {% block title %}Configuración - EcoRación{% endblock %}
@@ -100,9 +100,44 @@
 
     <!-- BOTÓN GUARDAR -->
     <div class="mt-3">
-        <button class="btn btn-ecoracion">Guardar cambios</button>
+        <button type="submit" class="btn btn-ecoracion">Guardar cambios</button>
     </div>
 
 </form>
 
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+    try {
+        const checkbox = document.querySelector('input[name="modo_oscuro"]');
+        if (!checkbox) return;
+
+        // Priorizar el valor almacenado en localStorage (si existe)
+        const stored = localStorage.getItem('modo_oscuro');
+        if (stored === '1') {
+            checkbox.checked = true;
+            document.documentElement.classList.add('dark');
+        } else if (stored === '0') {
+            checkbox.checked = false;
+            document.documentElement.classList.remove('dark');
+        }
+
+        // Cuando el usuario cambia el switch, actualizar visual y guardar preferencia
+        checkbox.addEventListener('change', function(){
+            if (checkbox.checked) {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('modo_oscuro', '1');
+            } else {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('modo_oscuro', '0');
+            }
+        });
+    } catch(e) {
+        // fail silently
+        console.error(e);
+    }
+});
+</script>
 {% endblock %}

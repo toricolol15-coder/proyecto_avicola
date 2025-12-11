@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "panel/base.html" %}
 
 {% block title %}Proyecciones - EcoRación{% endblock %}
 
@@ -23,6 +23,16 @@
                             <option value="{{ r.id }}">{{ r.descripcion }}</option>
                         {% endfor %}
                     </select>
+                </div>
+
+                <!-- UNIDAD DE DATOS DE LA RACIÓN -->
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Unidad de los valores de la ración</label>
+                    <select class="form-select" name="unidad_racion" id="unidad_racion">
+                        <option value="g">Gramos (g)</option>
+                        <option value="kg">Kilogramos (kg)</option>
+                    </select>
+                    <small class="text-muted">Selecciona si los valores de 'granos' y 'algas' en la ración están en gramos o kilogramos.</small>
                 </div>
 
                 <!-- CANTIDAD DE ANIMALES -->
@@ -76,9 +86,7 @@
         <!-- GRÁFICO (placeholder) -->
         <div class="card shadow-sm p-4 text-center">
             <h6 class="mb-2">Distribución de insumos</h6>
-            <div style="height: 250px; background: #f5f5f5; border-radius: 8px; display:flex; align-items:center; justify-content:center;">
-                <span class="text-muted">Aquí irá un gráfico circular</span>
-            </div>
+            <canvas id="proyeccionChart" style="max-height:250px;"></canvas>
         </div>
 
         <!-- BOTONES DE EXPORTACIÓN -->
@@ -90,39 +98,86 @@
     </div>
 </div>
 
-<!-- SCRIPT BÁSICO: luego lo conectamos a Django -->
+<!-- SCRIPT DINÁMICO: calcula proyección usando datos de la ración seleccionada y dibuja gráfico -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-document.getElementById("form-proyecciones").addEventListener("submit", function(e){
+const racionesData = {{ raciones_data_json|default:'{}'|safe }};
+let chart = null;
+
+function convertirPeriodoADias(periodo, unidad){
+    if(unidad === 'semanas') return periodo * 7;
+    if(unidad === 'meses') return periodo * 30;
+    return periodo;
+}
+
+function renderChart(granos, algas, carbonato){
+    const ctx = document.getElementById('proyeccionChart');
+    const data = [granos, algas, carbonato];
+    if(chart) chart.destroy();
+    chart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Granos (kg)', 'Algas (kg)', 'Carbonato (kg)'],
+            datasets: [{
+                data: data,
+                backgroundColor: ['#0d8b3c', '#0f766e', '#f59e0b']
+            }]
+        },
+        options: { responsive: true }
+    });
+}
+
+document.getElementById('form-proyecciones').addEventListener('submit', function(e){
     e.preventDefault();
+    const racionId = document.querySelector('[name="racion_id"]').value;
+    const cantidad = parseFloat(document.querySelector('[name="cantidad"]').value) || 0;
+    let periodo = parseFloat(document.querySelector('[name="periodo"]').value) || 0;
+    const unidad = document.querySelector('[name="unidad_periodo"]').value;
 
-    let cantidad = parseFloat(document.querySelector("[name='cantidad']").value);
-    let periodo = parseFloat(document.querySelector("[name='periodo']").value);
-    let unidad = document.querySelector("[name='unidad_periodo']").value;
+    periodo = convertirPeriodoADias(periodo, unidad);
 
-    // Convertir semanas/meses a días
-    if(unidad === "semanas") periodo = periodo * 7;
-    if(unidad === "meses") periodo = periodo * 30;
+    // Obtener datos de la ración seleccionada
+    const racion = racionesData[racionId];
+    if(!racion){
+        alert('Selecciona una ración válida');
+        return;
+    }
 
-    // Datos de ejemplo (puedes reemplazar con los datos de la ración seleccionada)
-    let granos_diarios = 120; 
-    let algas_diarias = 30;
-    let carbonato_diario = 12;
+    // Interpretación: racion.granos y racion.algas pueden estar en gramos o kilogramos.
+    // El usuario selecciona la unidad en el campo "unidad_racion".
+    let granos_diarios = parseFloat(racion.granos) || 0; // en unidad según unidad_racion
+    let algas_diarias = parseFloat(racion.algas) || 0;
+    // Estimamos carbonato como 5% del total si no existe
+    let carbonato_diario = ((granos_diarios + algas_diarias) * 0.05) || 0;
 
-    let total_granos = granos_diarios * cantidad * periodo / 1000;
-    let total_algas = algas_diarias * cantidad * periodo / 1000;
-    let total_carbonato = carbonato_diario * cantidad * periodo / 1000;
+    const unidadRacion = document.getElementById('unidad_racion').value;
+    let total_granos = 0, total_algas = 0, total_carbonato = 0;
 
-    let consumo_total = total_granos + total_algas + total_carbonato;
-    let consumo_opt = consumo_total * 0.85;
-    let ahorro = consumo_total - consumo_opt;
+    if (unidadRacion === 'g') {
+        // valores en gramos → convertir a kg dividiendo por 1000
+        total_granos = (granos_diarios * cantidad * periodo) / 1000;
+        total_algas = (algas_diarias * cantidad * periodo) / 1000;
+        total_carbonato = (carbonato_diario * cantidad * periodo) / 1000;
+    } else {
+        // valores ya en kilogramos
+        total_granos = (granos_diarios * cantidad * periodo);
+        total_algas = (algas_diarias * cantidad * periodo);
+        total_carbonato = (carbonato_diario * cantidad * periodo);
+    }
 
-    document.getElementById("res-granos").innerText = total_granos.toFixed(2) + " kg";
-    document.getElementById("res-algas").innerText = total_algas.toFixed(2) + " kg";
-    document.getElementById("res-carbonato").innerText = total_carbonato.toFixed(2) + " kg";
-    document.getElementById("res-optimizado").innerText = consumo_opt.toFixed(2) + " kg";
-    document.getElementById("res-ahorro").innerText = ahorro.toFixed(2) + " kg";
+    const consumo_total = total_granos + total_algas + total_carbonato;
+    const consumo_opt = consumo_total * 0.85;
+    const ahorro = consumo_total - consumo_opt;
 
-    document.getElementById("resultados").style.display = "block";
+    document.getElementById('res-granos').innerText = total_granos.toFixed(2) + ' kg';
+    document.getElementById('res-algas').innerText = total_algas.toFixed(2) + ' kg';
+    document.getElementById('res-carbonato').innerText = total_carbonato.toFixed(2) + ' kg';
+    document.getElementById('res-optimizado').innerText = consumo_opt.toFixed(2) + ' kg';
+    document.getElementById('res-ahorro').innerText = ahorro.toFixed(2) + ' kg';
+    document.getElementById('resultados').style.display = 'block';
+
+    // Render chart
+    renderChart(total_granos, total_algas, total_carbonato);
 });
 </script>
 

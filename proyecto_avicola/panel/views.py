@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from django.http import JsonResponse
 from .models import RegistroRacion, RegistroUsuario
 from .models import Insumo  # Asegúrate de ponerlo arriba con tus otros imports
+import json
 
 
 
@@ -74,15 +75,24 @@ def proyecciones(request):
     raciones = RegistroRacion.objects.all().order_by('-creado_en')
 
     # Crear opciones solo con tipo de animal y peso
-    opciones = [
-        {
+    opciones = []
+    raciones_data = {}
+    for r in raciones:
+        opciones.append({
             "id": r.id,
             "descripcion": f"{r.tipo_animal} - {r.peso} kg"
-        } for r in raciones
-    ]
+        })
+        # incluir datos relevantes por ración para uso en JS
+        raciones_data[r.id] = {
+            "granos": float(r.granos) if r.granos is not None else 0,
+            "algas": float(r.algas) if r.algas is not None else 0,
+            "peso": float(r.peso) if r.peso is not None else 0,
+            "dias": r.dias,
+        }
 
     return render(request, "panel/proyecciones.html", {
-        "raciones": opciones
+        "raciones": opciones,
+        "raciones_data_json": json.dumps(raciones_data)
     })
 
 @login_required
@@ -181,8 +191,75 @@ def stock(request):
 def stock_agregar(request, id):
     insumo = get_object_or_404(Insumo, id=id)
     if request.method == "POST":
-        cantidad = int(request.POST.get("cantidad", 0))
-        insumo.stock_actual += cantidad
-        insumo.save()
-        return redirect("stock")
+        try:
+            cantidad = float(request.POST.get("cantidad", 0))
+            if cantidad < 0:
+                return render(request, "panel/stock_agregar.html", {
+                    "insumo": insumo,
+                    "error": "La cantidad no puede ser negativa"
+                })
+            insumo.stock_actual += cantidad
+            insumo.save()
+            return redirect("stock")
+        except ValueError:
+            return render(request, "panel/stock_agregar.html", {
+                "insumo": insumo,
+                "error": "Ingresa un número válido"
+            })
     return render(request, "panel/stock_agregar.html", {"insumo": insumo})
+
+
+@login_required
+def stock_crear(request):
+    """Crear un nuevo insumo"""
+    if request.method == "POST":
+        nombre = request.POST.get("nombre", "").strip()
+        unidad = request.POST.get("unidad", "kg").strip()
+        stock_actual = float(request.POST.get("stock_actual", 0))
+        stock_minimo = float(request.POST.get("stock_minimo", 0))
+        porcentaje_bodega = float(request.POST.get("porcentaje_bodega", 0))
+
+        if not nombre:
+            return render(request, "panel/stock_crear.html", {
+                "error": "El nombre del insumo es requerido"
+            })
+
+        if Insumo.objects.filter(nombre=nombre).exists():
+            return render(request, "panel/stock_crear.html", {
+                "error": f"El insumo '{nombre}' ya existe"
+            })
+
+        Insumo.objects.create(
+            nombre=nombre,
+            unidad=unidad,
+            stock_actual=stock_actual,
+            stock_minimo=stock_minimo,
+            porcentaje_ocupado_bodega=porcentaje_bodega
+        )
+        return redirect("stock")
+
+    return render(request, "panel/stock_crear.html")
+
+
+@login_required
+def stock_editar(request, id):
+    insumo = get_object_or_404(Insumo, id=id)
+    if request.method == 'POST':
+        nombre = request.POST.get('nombre', '').strip()
+        try:
+            stock_actual = float(request.POST.get('stock_actual', insumo.stock_actual))
+            stock_minimo = float(request.POST.get('stock_minimo', insumo.stock_minimo))
+        except ValueError:
+            return render(request, 'panel/editar_stock.html', {
+                'insumo': insumo,
+                'error': 'Valores numéricos inválidos'
+            })
+
+        if nombre:
+            insumo.nombre = nombre
+        insumo.stock_actual = stock_actual
+        insumo.stock_minimo = stock_minimo
+        insumo.save()
+        return redirect('stock')
+
+    return render(request, 'panel/editar_stock.html', {'insumo': insumo})

@@ -19,6 +19,65 @@ body {
     --warning: #f59e0b;
 }
 
+/* =====================
+   MODO OSCURO (clase .dark aplicada a <html> o <body>)
+   ===================== */
+
+html.dark body,
+body.dark {
+    --green-dark: #042816;
+    --green-main: #0b8b52;
+    --green-soft: #07331b;
+    --text-main: #e6eef0;
+    --text-muted: #9ca3af;
+    --border-soft: #1f2937;
+    --danger: #ef9a9a;
+    --warning: #fbbf24;
+    background-color: #071018;
+    color: var(--text-main);
+}
+
+html.dark .card-main,
+body.dark .card-main {
+    background-color: #071722;
+    color: var(--text-main);
+    box-shadow: none;
+    border: 1px solid rgba(255,255,255,0.03);
+}
+
+html.dark .sidebar,
+body.dark .sidebar {
+    background-color: #052617;
+}
+
+html.dark .sidebar-link,
+body.dark .sidebar-link {
+    color: rgba(255,255,255,0.85);
+}
+
+html.dark .sidebar-link:hover,
+body.dark .sidebar-link:hover {
+    background-color: rgba(255,255,255,0.03);
+}
+
+html.dark .table-ecoracion,
+body.dark .table-ecoracion {
+    background-color: transparent;
+    border: 1px solid rgba(255,255,255,0.04);
+}
+
+html.dark .page-title,
+body.dark .page-title {
+    color: var(--text-main);
+}
+
+html.dark .btn-ecoracion,
+body.dark .btn-ecoracion {
+    background-color: var(--green-main);
+    color: #fff;
+    border-color: rgba(255,255,255,0.06);
+}
+
 /* Card blanca principal del panel */
 .card-main {
     background-color: #ffffff;

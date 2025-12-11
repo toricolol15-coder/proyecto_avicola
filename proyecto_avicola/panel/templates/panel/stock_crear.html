@@ -1,0 +1,144 @@
+{% extends "panel/base.html" %}
+
+{% block title %}Crear Insumo - EcoRación{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <h1 class="page-title mb-4">Crear Nuevo Insumo</h1>
+
+        {% if error %}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ error }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endif %}
+
+        <!-- FORMULARIO PARA CREAR INSUMO -->
+        <form method="POST" class="card p-4">
+            {% csrf_token %}
+
+            <!-- Nombre del insumo -->
+            <div class="mb-4">
+                <label for="nombre" class="form-label fw-600">Nombre del insumo</label>
+                <input 
+                    type="text" 
+                    class="form-control form-control-lg" 
+                    id="nombre" 
+                    name="nombre" 
+                    placeholder="ej: Pellets, Carbonato, Algas..."
+                    required
+                    autofocus
+                >
+                <small class="form-text text-muted mt-2">Ej: Pellets para gallina, Carbonato de calcio, etc.</small>
+            </div>
+
+            <!-- Unidad de medida -->
+            <div class="mb-4">
+                <label for="unidad" class="form-label fw-600">Unidad de medida</label>
+                <select class="form-select form-select-lg" id="unidad" name="unidad" required>
+                    <option value="kg" selected>Kilogramos (kg)</option>
+                    <option value="g">Gramos (g)</option>
+                    <option value="l">Litros (l)</option>
+                    <option value="ml">Mililitros (ml)</option>
+                    <option value="u">Unidades (u)</option>
+                </select>
+            </div>
+
+            <div class="row g-3">
+                <!-- Stock actual -->
+                <div class="col-md-6">
+                    <label for="stock_actual" class="form-label fw-600">Stock actual</label>
+                    <input 
+                        type="number" 
+                        step="0.01" 
+                        min="0" 
+                        class="form-control form-control-lg" 
+                        id="stock_actual" 
+                        name="stock_actual" 
+                        value="0"
+                        required
+                    >
+                </div>
+
+                <!-- Stock mínimo -->
+                <div class="col-md-6">
+                    <label for="stock_minimo" class="form-label fw-600">Stock mínimo</label>
+                    <input 
+                        type="number" 
+                        step="0.01" 
+                        min="0" 
+                        class="form-control form-control-lg" 
+                        id="stock_minimo" 
+                        name="stock_minimo" 
+                        value="10"
+                        required
+                    >
+                    <small class="form-text text-muted mt-2">Cantidad límite antes de alerta</small>
+                </div>
+            </div>
+
+            <!-- Porcentaje de bodega -->
+            <div class="mb-4 mt-3">
+                <label for="porcentaje_bodega" class="form-label fw-600">% ocupado en bodega</label>
+                <input 
+                    type="number" 
+                    step="0.01" 
+                    min="0" 
+                    max="100" 
+                    class="form-control form-control-lg" 
+                    id="porcentaje_bodega" 
+                    name="porcentaje_bodega" 
+                    value="0"
+                >
+                <small class="form-text text-muted mt-2">Porcentaje del espacio que ocupa en bodega (opcional)</small>
+            </div>
+
+            <!-- BOTONES -->
+            <div class="d-flex gap-2 mt-5">
+                <a href="{% url 'stock' %}" class="btn btn-outline-secondary flex-grow-1">
+                    Cancelar
+                </a>
+                <button type="submit" class="btn btn-ecoracion flex-grow-1">
+                    ✓ Crear Insumo
+                </button>
+            </div>
+        </form>
+
+        <!-- EJEMPLOS COMUNES -->
+        <div class="mt-5 pt-4 border-top">
+            <h6 class="text-muted mb-3">📋 Insumos comunes para aves:</h6>
+            <ul class="small text-muted ps-3">
+                <li><strong>Pellets:</strong> Alimento balanceado en presentación de pellets (kg)</li>
+                <li><strong>Carbonato de calcio:</strong> Para reforzar cáscaras de huevos (kg)</li>
+                <li><strong>Algas marinas:</strong> Suplemento nutricional (kg o g)</li>
+                <li><strong>Grano mixto:</strong> Combinación de maíz, sorgo, etc. (kg)</li>
+                <li><strong>Vitaminas/minerales:</strong> Aditivos en polvo (kg o g)</li>
+            </ul>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<style>
+    .fw-600 {
+        font-weight: 600;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Sincronizar tema oscuro
+    try {
+        const dark = localStorage.getItem('modo_oscuro');
+        if (dark === '1') {
+            document.documentElement.classList.add('dark');
+        }
+    } catch(e) {}
+});
+</script>
+{% endblock %}

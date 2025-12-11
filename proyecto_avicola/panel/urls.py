@@ -25,5 +25,7 @@ urlpatterns = [
 # Stock
     path('stock/', views.stock, name="stock"),
     path('stock/agregar/<int:id>/', views.stock_agregar, name="stock_agregar"),
+    path('stock/crear/', views.stock_crear, name="stock_crear"),
+    path('stock/editar/<int:id>/', views.stock_editar, name="stock_editar"),
 
 ]

@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "panel/base.html" %}
 
 {% block title %}Inicio - EcoRación{% endblock %}
 
@@ -9,37 +9,45 @@
 
     <div class="col-md-4">
         <div class="metric-card">
-            <h6>Ahorro mensual</h6>
-            <span>{{ ahorro_mensual|default:"12%" }}</span>
+            <h6>Total insumos</h6>
+            <span>{{ insumos|length }}</span>
         </div>
     </div>
 
     <div class="col-md-4">
         <div class="metric-card metric-card-secondary">
-            <h6>Reducción de desperdicio</h6>
-            <span>{{ desperdicio|default:"18 kg" }}</span>
+            <h6>Alertas activas</h6>
+            <span>{{ alertas_stock|length }}</span>
         </div>
     </div>
 
     <div class="col-md-4">
         <div class="alerta-stock-card">
-            <h6 class="mb-2">Alertas de Stock</h6>
+            <h6 class="mb-2">📦 Stock Actual</h6>
 
-            <div class="alerta-item">
-                <div class="alerta-label">
-                    <div class="alerta-icon-danger"></div>
-                    <span>pellets: 12 kg</span>
+            {% if alertas_stock and alertas_stock|length > 0 %}
+                {% for a in alertas_stock|slice:":3" %}
+                    <div class="alerta-item">
+                        <div class="alerta-label">
+                            {% if a.nivel == 'CRITICO' or a.nivel == 'Crítico' %}
+                                <div class="alerta-icon-danger"></div>
+                            {% else %}
+                                <div class="alerta-icon-warning"></div>
+                            {% endif %}
+                            <span>{{ a.nombre }}: {{ a.stock_actual }}</span>
+                        </div>
+                        <small>{{ a.nivel }}</small>
+                    </div>
+                {% endfor %}
+                <div class="mt-2">
+                    <a href="{% url 'stock' %}" class="small">Ver todos →</a>
                 </div>
-                <small>Bajo</small>
-            </div>
-
-            <div class="alerta-item mb-3">
-                <div class="alerta-label">
-                    <div class="alerta-icon-warning"></div>
-                    <span>Carbonato: 3 kg</span>
+            {% else %}
+                <p class="text-muted mb-0 small">Todos los insumos están en niveles normales.</p>
+                <div class="mt-2">
+                    <a href="{% url 'stock' %}" class="small">Ir a Stock →</a>
                 </div>
-                <small>Crítico</small>
-            </div>
+            {% endif %}
 
         </div>
     </div>

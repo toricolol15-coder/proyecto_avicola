@@ -66,6 +66,7 @@ TEMPLATES = [
             'context_processors': [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
+                'panel.context_processors.stock_summary',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
@@ -84,9 +85,18 @@ WSGI_APPLICATION = 'sistema_raciones.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-}}
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'avicoladb',           # NOMBRE DE TU BASE DE DATOS
+        'USER': 'tori',              # Tu usuario de MySQL
+        'PASSWORD': '123456',          # Tu contraseña de MySQL (cámbiala por la tuya)
+        'HOST': '127.0.0.1',         # Localhost
+        'PORT': '3306',              # Puerto por defecto de MySQL
+        'OPTIONS': {
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+        }
+    }
+}
+
 
 # ------------------------
 #   VALIDACIÓN PASSWORD

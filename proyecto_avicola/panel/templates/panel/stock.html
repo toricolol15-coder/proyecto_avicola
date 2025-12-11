@@ -1,0 +1,201 @@
+{% extends "panel/base.html" %}
+
+{% block title %}Stock - EcoRación{% endblock %}
+
+{% block content %}
+
+<h1 class="page-title">Stock de Insumos</h1>
+
+<!-- BOTÓN CREAR NUEVO INSUMO -->
+<div class="mb-3">
+    <a href="{% url 'stock_crear' %}" class="btn btn-sm btn-outline-success">
+        ➕ Crear nuevo insumo
+    </a>
+</div>
+
+<!-- RESUMEN SUPERIOR -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="metric-card">
+            <h6>Total Insumos</h6>
+            <span>{{ insumos|length }}</span>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="metric-card metric-card-secondary">
+            <h6>Stock Normal</h6>
+            <span id="count-normal">0</span>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="metric-card" style="background-color: #f59e0b;">
+            <h6>Stock Bajo</h6>
+            <span id="count-bajo">0</span>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="metric-card" style="background-color: #dc2626;">
+            <h6>Stock Crítico</h6>
+            <span id="count-critico">0</span>
+        </div>
+    </div>
+</div>
+
+<!-- TABLA DE INSUMOS -->
+<div class="card">
+    <div class="card-body">
+        {% if insumos %}
+            <table class="table table-ecoracion mb-0">
+                <thead>
+                    <tr>
+                        <th>Insumo</th>
+                        <th>Stock Actual</th>
+                        <th>Stock Mínimo</th>
+                        <th>Unidad</th>
+                        <th>% Bodega</th>
+                        <th>Estado</th>
+                        <th style="width: 120px;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for insumo in insumos %}
+                    <tr>
+                        <td><strong>{{ insumo.nombre|capfirst }}</strong></td>
+                        <td>{{ insumo.stock_actual }}</td>
+                        <td>{{ insumo.stock_minimo }}</td>
+                        <td>{{ insumo.unidad }}</td>
+                        <td>{{ insumo.porcentaje_ocupado_bodega }}%</td>
+                        <td>
+                            {% if insumo.stock_actual <= insumo.stock_minimo %}
+                                <span class="badge bg-danger">Crítico</span>
+                            {% elif insumo.stock_actual <= insumo.stock_minimo|add:"10" %}
+                                <span class="badge bg-warning text-dark">Bajo</span>
+                            {% else %}
+                                <span class="badge bg-success">Normal</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="d-flex gap-1">
+                                <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modalAgregar" data-insumo-id="{{ insumo.id }}" data-insumo-nombre="{{ insumo.nombre }}">
+                                    Agregar
+                                </button>
+                                <a href="{% url 'stock_editar' insumo.id %}" class="btn btn-sm btn-outline-primary">Editar</a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="text-center py-5">
+                <p class="text-muted mb-3">No hay insumos registrados aún.</p>
+                <a href="{% url 'stock_crear' %}" class="btn btn-ecoracion">
+                    ➕ Crear el primer insumo
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ALERTAS DE STOCK -->
+{% if alertas_stock %}
+<div class="row mt-4">
+    <div class="col-lg-12">
+        <h6 class="mb-3">Alertas de Stock Activas</h6>
+        <div class="alerta-stock-card">
+            {% for alerta in alertas_stock %}
+                <div class="alerta-item">
+                    <div class="alerta-label">
+                        {% if alerta.nivel == "Crítico" %}
+                            <div class="alerta-icon-danger"></div>
+                        {% elif alerta.nivel == "Bajo" %}
+                            <div class="alerta-icon-warning"></div>
+                        {% endif %}
+                        <span>{{ alerta.nombre }}: {{ alerta.stock_actual }} restante</span>
+                    </div>
+                    <small>{{ alerta.nivel }}</small>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- MODAL PARA AGREGAR STOCK -->
+<div class="modal fade" id="modalAgregar" tabindex="-1" aria-labelledby="modalAgregarLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalAgregarLabel">Agregar Stock a <strong id="nombre-insumo"></strong></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="" id="formAgregarStock">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="cantidad" class="form-label">Cantidad a agregar</label>
+                        <input type="number" step="0.01" class="form-control" id="cantidad" name="cantidad" placeholder="0.00" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-ecoracion">Guardar cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+    // Contar estados de stock
+    const insumos = {{ insumos|length }};
+    let countNormal = 0, countBajo = 0, countCritico = 0;
+
+    {% for insumo in insumos %}
+        {% if insumo.stock_actual <= insumo.stock_minimo %}
+            countCritico++;
+        {% elif insumo.stock_actual <= insumo.stock_minimo|add:"10" %}
+            countBajo++;
+        {% else %}
+            countNormal++;
+        {% endif %}
+    {% endfor %}
+
+    document.getElementById('count-normal').textContent = countNormal;
+    document.getElementById('count-bajo').textContent = countBajo;
+    document.getElementById('count-critico').textContent = countCritico;
+
+    // Evento del modal para cargar datos dinámicamente
+    const modalAgregar = document.getElementById('modalAgregar');
+    if (modalAgregar) {
+        modalAgregar.addEventListener('show.bs.modal', function(e) {
+            const btn = e.relatedTarget;
+            const insumoId = btn.getAttribute('data-insumo-id');
+            const insumoNombre = btn.getAttribute('data-insumo-nombre');
+
+            document.getElementById('nombre-insumo').textContent = insumoNombre;
+
+            // Cambiar la URL del formulario - RUTA CORRECTA
+            const form = document.getElementById('formAgregarStock');
+            form.action = `/stock/agregar/${insumoId}/`;
+        });
+    }
+
+    // Sincronizar tema oscuro si está activo
+    try {
+        const dark = localStorage.getItem('modo_oscuro');
+        if (dark === '1') {
+            document.documentElement.classList.add('dark');
+        }
+    } catch(e) {}
+});
+</script>
+{% endblock %}

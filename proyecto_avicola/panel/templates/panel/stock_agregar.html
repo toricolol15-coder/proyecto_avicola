@@ -1,0 +1,143 @@
+{% extends "panel/base.html" %}
+
+{% block title %}Agregar Stock - EcoRación{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <h1 class="page-title mb-4">Rellenar Stock</h1>
+
+        <!-- INFORMACIÓN DEL INSUMO -->
+        <div class="card mb-4" style="border-left: 4px solid var(--green-main);">
+            <div class="card-body">
+                <h5 class="card-title">{{ insumo.nombre|capfirst }}</h5>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="stat-box">
+                            <small class="text-muted">Stock Actual</small>
+                            <h6 class="mb-0">{{ insumo.stock_actual }} {{ insumo.unidad }}</h6>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="stat-box">
+                            <small class="text-muted">Stock Mínimo</small>
+                            <h6 class="mb-0">{{ insumo.stock_minimo }} {{ insumo.unidad }}</h6>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="stat-box">
+                            <small class="text-muted">Porcentaje Bodega</small>
+                            <h6 class="mb-0">{{ insumo.porcentaje_ocupado_bodega }}%</h6>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FORMULARIO PARA AGREGAR -->
+        <form method="POST">
+            {% csrf_token %}
+
+            <div class="mb-4">
+                <label for="cantidad" class="form-label fw-600">Cantidad a agregar</label>
+                <div class="input-group input-group-lg">
+                    <input 
+                        type="number" 
+                        step="0.01" 
+                        min="0" 
+                        class="form-control" 
+                        id="cantidad" 
+                        name="cantidad" 
+                        placeholder="0.00" 
+                        required
+                        autofocus
+                    >
+                    <span class="input-group-text">{{ insumo.unidad }}</span>
+                </div>
+                <small class="form-text text-muted mt-2">
+                    Ingresa la cantidad en {{ insumo.unidad }} que deseas agregar al stock actual.
+                </small>
+            </div>
+
+            <!-- VISTA PREVIA DEL NUEVO TOTAL -->
+            <div class="alert alert-info d-flex align-items-center">
+                <div>
+                    <strong>Stock después de agregar:</strong>
+                    <h5 class="mb-0 mt-2" id="preview-total">
+                        {{ insumo.stock_actual }} {{ insumo.unidad }}
+                    </h5>
+                </div>
+            </div>
+
+            <!-- BOTONES -->
+            <div class="d-flex gap-2">
+                <a href="{% url 'stock' %}" class="btn btn-outline-secondary flex-grow-1">
+                    Cancelar
+                </a>
+                <button type="submit" class="btn btn-ecoracion flex-grow-1">
+                    ✓ Confirmar y Guardar
+                </button>
+            </div>
+        </form>
+
+        <!-- HISTORIAL (OPCIONAL) -->
+        <div class="mt-5 pt-4 border-top">
+            <h6 class="text-muted mb-3">💡 Tips</h6>
+            <ul class="small text-muted ps-3">
+                <li>Revisa el stock mínimo antes de rellenar</li>
+                <li>Si el stock está bajo (rojo), considera un reabastecimiento prioritario</li>
+                <li>Asegúrate de ingresar la cantidad correcta antes de confirmar</li>
+            </ul>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<style>
+    .stat-box {
+        background-color: var(--green-soft);
+        padding: 12px;
+        border-radius: 8px;
+        text-align: center;
+    }
+
+    .fw-600 {
+        font-weight: 600;
+    }
+
+    html.dark .stat-box,
+    body.dark .stat-box {
+        background-color: rgba(13, 139, 60, 0.15);
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const cantidadInput = document.getElementById('cantidad');
+    const previewTotal = document.getElementById('preview-total');
+    const stockActual = {{ insumo.stock_actual|floatformat:2 }};
+    const unidad = "{{ insumo.unidad }}";
+
+    // Actualizar vista previa en tiempo real
+    if (cantidadInput && previewTotal) {
+        cantidadInput.addEventListener('input', function() {
+            const cantidad = parseFloat(this.value) || 0;
+            const nuevoTotal = (stockActual + cantidad).toFixed(2);
+            previewTotal.textContent = nuevoTotal + ' ' + unidad;
+        });
+    }
+
+    // Sincronizar tema oscuro
+    try {
+        const dark = localStorage.getItem('modo_oscuro');
+        if (dark === '1') {
+            document.documentElement.classList.add('dark');
+        }
+    } catch(e) {}
+});
+</script>
+{% endblock %}
