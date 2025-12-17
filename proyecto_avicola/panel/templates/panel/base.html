@@ -19,6 +19,7 @@
     </script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'panel/css/estilos.css' %}">
+    <script src="{% static 'panel/js/alertas.js' %}"></script>
 </head>
 <body>
 
@@ -53,14 +54,25 @@
         </div>
 
         <ul class="sidebar-menu">
+            <!-- INICIO -->
             <li><a href="{% url 'dashboard' %}" class="sidebar-link {% if request.path == '/dashboard/' %}active{% endif %}">Inicio</a></li>
-            <li><a href="{% url 'raciones' %}" class="sidebar-link {% if request.path == '/raciones/' %}active{% endif %}">Raciones</a></li>
-
-            <li><a href="{% url 'registros' %}" class="sidebar-link {% if request.path == '/registros/' %}active{% endif %}">Registros</a></li>
-
-            <li><a href="{% url 'stock' %}" class="sidebar-link {% if request.path == '/stock/' %}active{% endif %}">Stock</a></li>
-
+            
+            <!-- GESTIÓN DE RACIONES -->
+            <li class="sidebar-section">Gestión de Raciones</li>
+            <li><a href="{% url 'raciones' %}" class="sidebar-link {% if request.path == '/raciones/' %}active{% endif %}">Crear Ración</a></li>
+            <li><a href="{% url 'registros' %}" class="sidebar-link {% if request.path == '/registros/' %}active{% endif %}">Historial de Raciones</a></li>
             <li><a href="{% url 'proyecciones' %}" class="sidebar-link {% if request.path == '/proyecciones/' %}active{% endif %}">Proyecciones</a></li>
+            
+            <!-- PRODUCCIÓN -->
+            <li class="sidebar-section">Producción</li>
+            <li><a href="{% url 'produccion_huevos' %}" class="sidebar-link {% if request.path == '/produccion-huevos/' %}active{% endif %}">Producción de Huevos</a></li>
+            
+            <!-- INVENTARIO -->
+            <li class="sidebar-section">Inventario</li>
+            <li><a href="{% url 'stock' %}" class="sidebar-link {% if request.path == '/stock/' %}active{% endif %}">Gestión de Stock</a></li>
+            
+            <!-- REPORTES Y CONFIGURACIÓN -->
+            <li class="sidebar-section">Sistema</li>
             <li><span class="sidebar-link">Reportes</span></li>
             <li><a href="{% url 'configuraciones' %}" class="sidebar-link {% if request.path == '/configuraciones/' %}active{% endif %}">Configuración</a></li>
             <li><a href="{% url 'logout' %}" class="sidebar-link">Cerrar sesión</a></li>

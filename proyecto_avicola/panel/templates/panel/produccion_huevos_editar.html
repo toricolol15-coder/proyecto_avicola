@@ -1,0 +1,46 @@
+{% extends "panel/base.html" %}
+
+{% block title %}Editar Producción de Huevos{% endblock %}
+
+{% block content %}
+
+<h1 class="page-title mb-4">Editar Producción de Huevos</h1>
+
+<div class="card p-4 shadow-sm">
+
+{% if error %}
+<div class="alert alert-danger">{{ error }}</div>
+{% endif %}
+
+<form method="POST">
+    {% csrf_token %}
+
+    <div class="mb-3">
+        <label class="form-label">Fecha</label>
+        <p class="form-control-plaintext">{{ today|date:"d/m/Y" }} (automática)</p>
+        <input type="hidden" name="fecha" value="{{ today }}">
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Cantidad de Huevos</label>
+        <input type="number" name="cantidad" class="form-control" min="1" value="{{ produccion.cantidad }}" required>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Tipo de Huevo</label>
+        <select name="tipo_huevo" class="form-control" required>
+            <option value="PEQUEÑO" {% if produccion.tipo_huevo == 'PEQUEÑO' %}selected{% endif %}>Pequeño</option>
+            <option value="MEDIANO" {% if produccion.tipo_huevo == 'MEDIANO' %}selected{% endif %}>Mediano</option>
+            <option value="GRANDE" {% if produccion.tipo_huevo == 'GRANDE' %}selected{% endif %}>Grande</option>
+            <option value="EXTRA_GRANDE" {% if produccion.tipo_huevo == 'EXTRA_GRANDE' %}selected{% endif %}>Extra Grande</option>
+        </select>
+    </div>
+
+    <button class="btn btn-success">Guardar cambios</button>
+    <a href="{% url 'produccion_huevos' %}" class="btn btn-secondary">Volver</a>
+
+</form>
+
+</div>
+
+{% endblock %}

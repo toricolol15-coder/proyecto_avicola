@@ -63,19 +63,23 @@
         <div class="card shadow-sm p-4" id="resultados" style="display:none;">
             <h5 class="mb-3">Resultados de la proyección</h5>
 
-            <p class="mb-1">Granos requeridos: <strong id="res-granos"></strong></p>
-            <p class="mb-1">Algas requeridas: <strong id="res-algas"></strong></p>
-            <p class="mb-1">Carbonato requerido: <strong id="res-carbonato"></strong></p>
-
-            <hr>
-
-            <p class="mb-1">Consumo optimizado (15% menos):  
-                <strong class="result-highlight-green" id="res-optimizado"></strong>
-            </p>
-
-            <p class="mb-0">Ahorro total estimado:  
-                <strong class="result-highlight-green" id="res-ahorro"></strong>
-            </p>
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Cantidades Máximas de Insumos</h6>
+                    <p class="mb-1">Granos: <strong id="res-granos-max"></strong></p>
+                    <p class="mb-1">Algas: <strong id="res-algas-max"></strong></p>
+                    <p class="mb-1">Carbonato: <strong id="res-carbonato-max"></strong></p>
+                    <p class="mb-1">Total insumos: <strong id="res-total-max"></strong></p>
+                </div>
+                <div class="col-md-6">
+                    <h6>Con Ahorro (15% menos consumo)</h6>
+                    <p class="mb-1">Granos: <strong id="res-granos-ahorro"></strong></p>
+                    <p class="mb-1">Algas: <strong id="res-algas-ahorro"></strong></p>
+                    <p class="mb-1">Carbonato: <strong id="res-carbonato-ahorro"></strong></p>
+                    <p class="mb-0">Total insumos: <strong class="result-highlight-green" id="res-total-ahorro"></strong></p>
+                    <p class="mb-0">Ahorro total: <strong class="result-highlight-green" id="res-ahorro-total"></strong></p>
+                </div>
+            </div>
         </div>
 
     </div>
@@ -83,10 +87,16 @@
     <!-- EXPORTACIONES + GRAFICO -->
     <div class="col-lg-5 d-flex flex-column gap-3">
 
-        <!-- GRÁFICO (placeholder) -->
+        <!-- GRÁFICO DINÁMICO -->
         <div class="card shadow-sm p-4 text-center">
-            <h6 class="mb-2">Distribución de insumos</h6>
+            <h6 class="mb-2">Proyección de Consumo de Insumos</h6>
             <canvas id="proyeccionChart" style="max-height:250px;"></canvas>
+            <div id="chart-legend" class="mt-2" style="display:none;">
+                <small class="text-muted">
+                    <span style="color:#dc3545;">●</span> Consumo máximo
+                    <span style="color:#28a745;margin-left:10px;">●</span> Con ahorro (15%)
+                </small>
+            </div>
         </div>
 
         <!-- BOTONES DE EXPORTACIÓN -->
@@ -102,6 +112,9 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 const racionesData = {{ raciones_data_json|default:'{}'|safe }};
+const fechas = {{ fechas_json|default:'[]'|safe }};
+const cantidades = {{ cantidades_json|default:'[]'|safe }};
+const tipos = {{ tipos_json|default:'{}'|safe }};
 let chart = null;
 
 function convertirPeriodoADias(periodo, unidad){
@@ -110,41 +123,207 @@ function convertirPeriodoADias(periodo, unidad){
     return periodo;
 }
 
-function renderChart(granos, algas, carbonato){
+function generarEtiquetasPeriodo(diasTotales, unidadOriginal) {
+    const etiquetas = [];
+    const fechaActual = new Date();
+    
+    for (let i = 0; i < diasTotales; i++) {
+        const fecha = new Date(fechaActual);
+        fecha.setDate(fecha.getDate() + i);
+        
+        if (unidadOriginal === 'dias' || diasTotales <= 7) {
+            etiquetas.push(fecha.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' }));
+        } else if (unidadOriginal === 'semanas' || diasTotales <= 31) {
+            // Para semanas, mostrar cada 7 días
+            if (i % 7 === 0) {
+                etiquetas.push('Sem ' + Math.floor(i / 7 + 1));
+            } else {
+                etiquetas.push('');
+            }
+        } else {
+            // Para meses, mostrar cada 30 días
+            if (i % 30 === 0) {
+                etiquetas.push('Mes ' + Math.floor(i / 30 + 1));
+            } else {
+                etiquetas.push('');
+            }
+        }
+    }
+    
+    return etiquetas;
+}
+
+function renderProyeccionChart(totalMaximo, totalConAhorro, periodo, unidad) {
+    console.log('Renderizando gráfico:', { totalMaximo, totalConAhorro, periodo, unidad });
+    
     const ctx = document.getElementById('proyeccionChart');
-    const data = [granos, algas, carbonato];
     if(chart) chart.destroy();
+    
+    const diasTotales = convertirPeriodoADias(periodo, unidad);
+    const etiquetas = generarEtiquetasPeriodo(diasTotales, unidad);
+    
+    // Crear arrays de datos para cada día
+    const datosMaximo = [];
+    const datosAhorro = [];
+    
+    for (let i = 0; i < diasTotales; i++) {
+        // El consumo se acumula día a día
+        const progreso = (i + 1) / diasTotales;
+        datosMaximo.push(totalMaximo * progreso);
+        datosAhorro.push(totalConAhorro * progreso);
+    }
+    
+    console.log('Datos del gráfico:', { etiquetas: etiquetas.length, datosMaximo: datosMaximo.slice(0, 5), datosAhorro: datosAhorro.slice(0, 5) });
+    
     chart = new Chart(ctx, {
-        type: 'doughnut',
+        type: 'line',
         data: {
-            labels: ['Granos (kg)', 'Algas (kg)', 'Carbonato (kg)'],
+            labels: etiquetas,
             datasets: [{
-                data: data,
-                backgroundColor: ['#0d8b3c', '#0f766e', '#f59e0b']
+                label: 'Consumo Máximo',
+                data: datosMaximo,
+                borderColor: '#dc3545',
+                backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                fill: true,
+                tension: 0.4
+            }, {
+                label: 'Con Ahorro (15%)',
+                data: datosAhorro,
+                borderColor: '#28a745',
+                backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                fill: true,
+                tension: 0.4
             }]
         },
-        options: { responsive: true }
+        options: { 
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                }
+            },
+            scales: {
+                y: { 
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Insumos Acumulados (kg)'
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return value.toFixed(0) + ' kg';
+                        }
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: unidad === 'dias' ? 'Días' : unidad === 'semanas' ? 'Semanas' : 'Meses'
+                    }
+                }
+            },
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            }
+        }
+    });
+    
+    document.getElementById('chart-legend').style.display = 'block';
+    console.log('Gráfico renderizado correctamente');
+}
+
+function guardarProyeccion(racionId, cantidadAnimales, periodoDias, unidadRacion, totalGranos, totalAlgas, totalCarbonato, totalGranosAhorro, totalAlgasAhorro, totalCarbonatoAhorro, ahorroTotal) {
+    const formData = new FormData();
+    formData.append('racion_id', racionId);
+    formData.append('cantidad_animales', cantidadAnimales);
+    formData.append('periodo_dias', periodoDias);
+    formData.append('unidad_racion', unidadRacion);
+    formData.append('total_granos', totalGranos.toFixed(2));
+    formData.append('total_algas', totalAlgas.toFixed(2));
+    formData.append('total_carbonato', totalCarbonato.toFixed(2));
+    formData.append('total_granos_ahorro', totalGranosAhorro.toFixed(2));
+    formData.append('total_algas_ahorro', totalAlgasAhorro.toFixed(2));
+    formData.append('total_carbonato_ahorro', totalCarbonatoAhorro.toFixed(2));
+    formData.append('ahorro_total', ahorroTotal.toFixed(2));
+
+    fetch('/guardar-proyeccion/', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log('Proyección guardada exitosamente con ID:', data.id);
+            // Mostrar mensaje de éxito
+            mostrarMensaje('Proyección guardada exitosamente', 'success');
+        } else {
+            console.error('Error al guardar proyección:', data.errors);
+            mostrarMensaje('Error al guardar la proyección: ' + data.errors.join(', '), 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error en la petición:', error);
+        mostrarMensaje('Error de conexión al guardar la proyección', 'danger');
     });
 }
 
+function mostrarMensaje(mensaje, tipo) {
+    // Crear elemento de alerta
+    const alerta = document.createElement('div');
+    alerta.className = `alert alert-${tipo} alert-dismissible fade show`;
+    alerta.innerHTML = `
+        ${mensaje}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    // Insertar al inicio del contenedor principal
+    const container = document.querySelector('.container-fluid');
+    container.insertBefore(alerta, container.firstChild);
+    
+    // Auto-remover después de 5 segundos
+    setTimeout(() => {
+        if (alerta.parentNode) {
+            alerta.remove();
+        }
+    }, 5000);
+}
+
+// Dibujar gráfico inicial si hay datos de producción
+// Nota: El gráfico ahora solo se muestra después de calcular una proyección
+// if(fechas.length > 0){
+//     renderChart();
+// }
+
 document.getElementById('form-proyecciones').addEventListener('submit', function(e){
     e.preventDefault();
+    console.log('Formulario enviado');
+    
     const racionId = document.querySelector('[name="racion_id"]').value;
     const cantidad = parseFloat(document.querySelector('[name="cantidad"]').value) || 0;
     let periodo = parseFloat(document.querySelector('[name="periodo"]').value) || 0;
     const unidad = document.querySelector('[name="unidad_periodo"]').value;
 
+    console.log('Datos del formulario:', { racionId, cantidad, periodo, unidad });
+
+    const periodoOriginal = periodo; // Guardar el valor original para el gráfico
     periodo = convertirPeriodoADias(periodo, unidad);
 
     // Obtener datos de la ración seleccionada
     const racion = racionesData[racionId];
+    console.log('Datos de la ración:', racion);
+    
     if(!racion){
         alert('Selecciona una ración válida');
         return;
     }
 
     // Interpretación: racion.granos y racion.algas pueden estar en gramos o kilogramos.
-    // El usuario selecciona la unidad en el campo "unidad_racion".
     let granos_diarios = parseFloat(racion.granos) || 0; // en unidad según unidad_racion
     let algas_diarias = parseFloat(racion.algas) || 0;
     // Estimamos carbonato como 5% del total si no existe
@@ -165,19 +344,58 @@ document.getElementById('form-proyecciones').addEventListener('submit', function
         total_carbonato = (carbonato_diario * cantidad * periodo);
     }
 
-    const consumo_total = total_granos + total_algas + total_carbonato;
-    const consumo_opt = consumo_total * 0.85;
-    const ahorro = consumo_total - consumo_opt;
+    // Calcular costos (usando precios estimados por defecto)
+    const precioGranos = 0.50; // $/kg
+    const precioAlgas = 1.20; // $/kg  
+    const precioCarbonato = 0.80; // $/kg
+    
+    const costoGranos = total_granos * precioGranos;
+    const costoAlgas = total_algas * precioAlgas;
+    const costoCarbonato = total_carbonato * precioCarbonato;
+    const costoMaximo = costoGranos + costoAlgas + costoCarbonato;
+    const costoConAhorro = costoMaximo * 0.85;
+    const ahorro = costoMaximo - costoConAhorro;
 
-    document.getElementById('res-granos').innerText = total_granos.toFixed(2) + ' kg';
-    document.getElementById('res-algas').innerText = total_algas.toFixed(2) + ' kg';
-    document.getElementById('res-carbonato').innerText = total_carbonato.toFixed(2) + ' kg';
-    document.getElementById('res-optimizado').innerText = consumo_opt.toFixed(2) + ' kg';
-    document.getElementById('res-ahorro').innerText = ahorro.toFixed(2) + ' kg';
+    // Calcular cantidades con ahorro del 15%
+    const total_granos_ahorro = total_granos * 0.85;
+    const total_algas_ahorro = total_algas * 0.85;
+    const total_carbonato_ahorro = total_carbonato * 0.85;
+    const total_max = total_granos + total_algas + total_carbonato;
+    const total_ahorro = total_granos_ahorro + total_algas_ahorro + total_carbonato_ahorro;
+    const ahorro_total = total_max - total_ahorro;
+
+    console.log('Cálculos:', {
+        total_granos, total_algas, total_carbonato,
+        total_granos_ahorro, total_algas_ahorro, total_carbonato_ahorro,
+        total_max, total_ahorro, ahorro_total
+    });
+
+    // Mostrar resultados
+    document.getElementById('res-granos-max').innerText = total_granos.toFixed(2) + ' kg';
+    document.getElementById('res-algas-max').innerText = total_algas.toFixed(2) + ' kg';
+    document.getElementById('res-carbonato-max').innerText = total_carbonato.toFixed(2) + ' kg';
+    document.getElementById('res-total-max').innerText = total_max.toFixed(2) + ' kg';
+    
+    document.getElementById('res-granos-ahorro').innerText = total_granos_ahorro.toFixed(2) + ' kg';
+    document.getElementById('res-algas-ahorro').innerText = total_algas_ahorro.toFixed(2) + ' kg';
+    document.getElementById('res-carbonato-ahorro').innerText = total_carbonato_ahorro.toFixed(2) + ' kg';
+    document.getElementById('res-total-ahorro').innerText = total_ahorro.toFixed(2) + ' kg';
+    document.getElementById('res-ahorro-total').innerText = ahorro_total.toFixed(2) + ' kg';
     document.getElementById('resultados').style.display = 'block';
 
-    // Render chart
-    renderChart(total_granos, total_algas, total_carbonato);
+    console.log('Resultados mostrados, llamando al gráfico');
+
+    // Actualizar gráfico de proyección (usando cantidades totales)
+    const totalMaximo = total_granos + total_algas + total_carbonato;
+    const totalConAhorro = total_granos_ahorro + total_algas_ahorro + total_carbonato_ahorro;
+    renderProyeccionChart(totalMaximo, totalConAhorro, periodoOriginal, unidad);
+    console.log('Gráfico actualizado');
+
+    // Guardar la proyección en la base de datos
+    guardarProyeccion(racionId, cantidad, periodo, unidadRacion, 
+                     total_granos, total_algas, total_carbonato,
+                     total_granos_ahorro, total_algas_ahorro, total_carbonato_ahorro,
+                     ahorro_total);
 });
 </script>
 

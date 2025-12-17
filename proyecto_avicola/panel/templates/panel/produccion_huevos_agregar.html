@@ -1,0 +1,56 @@
+{% extends "panel/base.html" %}
+
+{% block title %}Agregar Producción de Huevos{% endblock %}
+
+{% block content %}
+
+<h1 class="page-title mb-4">Agregar Producción de Huevos</h1>
+
+<div class="card p-4 shadow-sm">
+
+{% if error %}
+<div class="alert alert-danger">{{ error }}</div>
+{% endif %}
+
+<form method="POST">
+    {% csrf_token %}
+
+    <div class="mb-3">
+        <label class="form-label">Lote (opcional)</label>
+        <select name="lote" class="form-control">
+            <option value="">Sin lote específico</option>
+            {% for lote in lotes %}
+            <option value="{{ lote.id }}">{{ lote.nombre_lote }} ({{ lote.cantidad_gallinas }} gallinas)</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Fecha</label>
+        <input type="date" name="fecha" class="form-control" required>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Cantidad de Huevos</label>
+        <input type="number" name="cantidad" class="form-control" min="1" required>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Tipo de Huevo (opcional)</label>
+        <select name="tipo_huevo" class="form-control">
+            <option value="">Seleccionar tipo</option>
+            <option value="PEQUEÑO">Pequeño</option>
+            <option value="MEDIANO">Mediano</option>
+            <option value="GRANDE">Grande</option>
+            <option value="EXTRA_GRANDE">Extra Grande</option>
+        </select>
+    </div>
+
+    <button class="btn btn-success">Guardar</button>
+    <a href="{% url 'produccion_huevos' %}" class="btn btn-secondary">Volver</a>
+
+</form>
+
+</div>
+
+{% endblock %}

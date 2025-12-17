@@ -140,7 +140,7 @@ STATIC_URL = 'static/'
 
 # Carpeta donde Django buscará tus imágenes, CSS, JS
 STATICFILES_DIRS = [
-    BASE_DIR / "static",
+    BASE_DIR / "panel" / "static",
 ]
 
 STATIC_ROOT = BASE_DIR / "staticfiles"

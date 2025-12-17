@@ -5,6 +5,8 @@
 {% block content %}
 <h1 class="page-title mb-4">Calculadora de Raciones</h1>
 
+{% csrf_token %}
+
 <div class="row g-4">
 
     <!-- FORMULARIO -->
@@ -23,13 +25,18 @@
                         </select>
                         <button type="button" class="btn btn-outline-primary" onclick="agregarAnimal()">+</button>
                     </div>
+                    <!-- Lista de animales agregados -->
+                    <div id="animales-agregados" class="mt-2" style="display: none;">
+                        <small class="text-muted">Animales agregados:</small>
+                        <div id="lista-animales" class="d-flex flex-wrap gap-1 mt-1"></div>
+                    </div>
                 </div>
 
                 <!-- Peso -->
                 <div class="col-md-6">
                     <label class="form-label fw-bold">Peso del animal</label>
                     <div class="input-group">
-                        <input type="number" class="form-control" name="peso" min="1" step="0.1" required>
+                        <input type="text" class="form-control" name="peso" placeholder="Ej: 2.5 o 2,5" required>
                         <span class="input-group-text">kg</span>
                     </div>
                 </div>
@@ -38,7 +45,7 @@
                 <div class="col-md-6">
                     <label class="form-label fw-bold">Granos consumidos diariamente</label>
                     <div class="input-group">
-                        <input type="number" class="form-control" name="granos" min="1" step="0.1" required>
+                        <input type="text" class="form-control" name="granos" placeholder="Ej: 150.5 o 150,5" required>
                         <span class="input-group-text">g / día</span>
                     </div>
                 </div>
@@ -47,7 +54,7 @@
                 <div class="col-md-6">
                     <label class="form-label fw-bold">Algas consumidas diariamente</label>
                     <div class="input-group">
-                        <input type="number" class="form-control" name="algas" min="0" step="0.1" required>
+                        <input type="text" class="form-control" name="algas" placeholder="Ej: 50.0 o 50,0" required>
                         <span class="input-group-text">g / día</span>
                     </div>
                 </div>
@@ -64,7 +71,17 @@
                 {% endfor %}
             </div>
 
+            <!-- Mensajes de error/éxito -->
+            <div id="mensaje-alerta" class="alert" style="display: none;" role="alert">
+                <span id="mensaje-texto"></span>
+            </div>
+
             <button type="submit" class="btn btn-ecoracion w-100">CALCULAR</button>
+            
+            <!-- Mensaje de éxito -->
+            <div id="mensaje-exito" class="alert alert-success mt-3" style="display: none;">
+                <i class="fas fa-check-circle me-2"></i>¡Ración guardada exitosamente!
+            </div>
         </form>
     </div>
 
@@ -90,50 +107,247 @@
 </div>
 
 <script>
+// Array para almacenar animales agregados por el usuario
+let animalesAgregados = [];
+
+// Función local para mostrar mensajes en el contenedor específico de esta página
+function mostrarMensajeLocal(tipo, mensaje) {
+    const alerta = document.getElementById("mensaje-alerta");
+    if (alerta) {
+        const texto = document.getElementById("mensaje-texto");
+
+        // Limpiar clases anteriores
+        alerta.className = "alert";
+
+        // Agregar clase según tipo
+        if (tipo === "error") {
+            alerta.classList.add("alert-danger");
+        } else if (tipo === "warning") {
+            alerta.classList.add("alert-warning");
+        } else if (tipo === "success") {
+            alerta.classList.add("alert-success");
+        } else {
+            alerta.classList.add("alert-info");
+        }
+
+        // Agregar animación
+        if (tipo === "error") {
+            alerta.classList.add("alerta-bounce");
+            setTimeout(() => {
+                alerta.classList.add("alerta-shake");
+            }, 600);
+        } else {
+            alerta.classList.add("alerta-bounce");
+        }
+
+        texto.textContent = mensaje;
+        alerta.style.display = "block";
+
+        // Remover las animaciones después de que terminen
+        setTimeout(() => {
+            alerta.classList.remove("alerta-bounce", "alerta-shake");
+        }, 1100);
+
+        // Auto-ocultar después de 5 segundos para errores/warnings
+        if (tipo === "error" || tipo === "warning") {
+            setTimeout(() => {
+                alerta.style.display = "none";
+            }, 5000);
+        }
+    } else {
+        // Si no hay contenedor local, usar el global
+        mostrarMensaje(tipo, mensaje);
+    }
+}
+
+function ocultarMensaje() {
+    const alerta = document.getElementById("mensaje-alerta");
+    alerta.style.display = "none";
+}
+
 function agregarAnimal() {
     let nuevo = prompt("Ingrese el nombre del nuevo animal:");
     if (nuevo && nuevo.trim() !== "") {
+        nuevo = nuevo.trim();
+        
+        // Verificar si ya existe
         const select = document.getElementById("select-animal");
+        const opcionesExistentes = Array.from(select.options).map(opt => opt.value);
+        
+        if (opcionesExistentes.includes(nuevo)) {
+        mostrarMensajeLocal("warning", "Este animal ya existe en la lista.");
+            return;
+        }
+        
+        // Agregar al array y al select
+        animalesAgregados.push(nuevo);
         const option = document.createElement("option");
         option.value = nuevo;
         option.textContent = nuevo;
         select.appendChild(option);
         select.value = nuevo;
+        
+        // Mostrar la lista de animales agregados
+        actualizarListaAnimales();
+        
+        mostrarMensajeLocal("success", `Animal "${nuevo}" agregado correctamente.`);
+    }
+}
+
+function confirmarAccion(mensaje, callback) {
+    if (confirm(mensaje)) {
+        callback(true);
+    } else {
+        callback(false);
+    }
+}
+
+function quitarAnimal(animal) {
+    confirmarAccion(`¿Está seguro de que desea eliminar "${animal}" de la lista?`, function(confirmado) {
+        if (confirmado) {
+            // Remover del array
+            animalesAgregados = animalesAgregados.filter(a => a !== animal);
+            
+            // Remover del select
+            const select = document.getElementById("select-animal");
+            const option = select.querySelector(`option[value="${animal}"]`);
+            if (option) {
+                select.removeChild(option);
+            }
+            
+            // Si el select tenía ese valor seleccionado, resetearlo
+            if (select.value === animal) {
+                select.value = "";
+            }
+            
+            // Actualizar la lista visual
+            actualizarListaAnimales();
+            
+            mostrarMensajeLocal("success", `Animal "${animal}" eliminado correctamente.`);
+        }
+    });
+}
+
+function actualizarListaAnimales() {
+    const contenedor = document.getElementById("animales-agregados");
+    const lista = document.getElementById("lista-animales");
+    
+    if (animalesAgregados.length > 0) {
+        lista.innerHTML = "";
+        animalesAgregados.forEach(animal => {
+            const badge = document.createElement("span");
+            badge.className = "badge bg-secondary d-flex align-items-center gap-1";
+            badge.innerHTML = `
+                ${animal}
+                <button type="button" class="btn-close btn-close-white" style="font-size: 10px;" onclick="quitarAnimal('${animal}')"></button>
+            `;
+            lista.appendChild(badge);
+        });
+        contenedor.style.display = "block";
+    } else {
+        contenedor.style.display = "none";
     }
 }
 
 document.getElementById("form-raciones").addEventListener("submit", async function(e){
     e.preventDefault();
 
-    let animal = document.querySelector("[name='tipo_animal']").value;
-    let peso = parseFloat(document.querySelector("[name='peso']").value);
-    let granos = parseFloat(document.querySelector("[name='granos']").value);
-    let algas = parseFloat(document.querySelector("[name='algas']").value);
+    // Función para convertir comas a puntos y validar números
+    function parseNumber(value, fieldName) {
+        if (!value || value.trim() === "") {
+            throw new Error(`El campo ${fieldName} es obligatorio`);
+        }
+        
+        // Convertir comas a puntos
+        let normalizedValue = value.replace(',', '.');
+        
+        let num = parseFloat(normalizedValue);
+        if (isNaN(num)) {
+            throw new Error(`El campo ${fieldName} debe ser un número válido`);
+        }
+        
+        return num;
+    }
 
-    let racion = granos + algas;
-    let ahorro = 15;
+    try {
+        let animal = document.querySelector("[name='tipo_animal']").value;
+        if (!animal) {
+            throw new Error("Debe seleccionar un tipo de animal");
+        }
 
-    document.getElementById("resultado-animal").innerText = animal;
-    document.getElementById("resultado-peso").innerText = peso + " kg";
-    document.getElementById("resultado-granos").innerText = granos + " g";
-    document.getElementById("resultado-algas").innerText = algas + " g";
-    document.getElementById("racion-diaria").innerText = racion + " g";
-    document.getElementById("ahorro").innerText = ahorro + "%";
+        let pesoInput = document.querySelector("[name='peso']").value;
+        let granosInput = document.querySelector("[name='granos']").value;
+        let algasInput = document.querySelector("[name='algas']").value;
 
-    const formData = new FormData();
-    formData.append("tipo_animal", animal);
-    formData.append("peso", peso);
-    formData.append("granos", granos);
-    formData.append("algas", algas);
-    document.querySelectorAll("[name='dias']:checked").forEach(d => formData.append("dias", d.value));
+        let peso = parseNumber(pesoInput, "peso");
+        let granos = parseNumber(granosInput, "granos");
+        let algas = parseNumber(algasInput, "algas");
 
-    const response = await fetch("{% url 'guardar_racion' %}", {
-        method: "POST",
-        body: formData,
-        headers: { "X-CSRFToken": "{{ csrf_token }}" }
-    });
-    const result = await response.json();
-    console.log("Guardado en DB con ID:", result.id);
+        if (peso <= 0) {
+            throw new Error("El peso debe ser mayor a 0");
+        }
+        if (granos < 0) {
+            throw new Error("Los granos no pueden ser negativos");
+        }
+        if (algas < 0) {
+            throw new Error("Las algas no pueden ser negativas");
+        }
+
+        let racion = granos + algas;
+        let ahorro = 15;
+
+        document.getElementById("resultado-animal").innerText = animal;
+        document.getElementById("resultado-peso").innerText = peso + " kg";
+        document.getElementById("resultado-granos").innerText = granos + " g";
+        document.getElementById("resultado-algas").innerText = algas + " g";
+        document.getElementById("racion-diaria").innerText = racion + " g";
+        document.getElementById("ahorro").innerText = ahorro + "%";
+
+        const formData = new FormData();
+        formData.append("tipo_animal", animal);
+        formData.append("peso", peso);
+        formData.append("granos", granos);
+        formData.append("algas", algas);
+        document.querySelectorAll("[name='dias']:checked").forEach(d => formData.append("dias", d.value));
+
+        const response = await fetch("{% url 'guardar_racion' %}", {
+            method: "POST",
+            body: formData,
+            headers: { 
+                "X-CSRFToken": "{{ csrf_token }}",
+                "X-Requested-With": "XMLHttpRequest"
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success === false) {
+            // Errores de validación
+            mostrarMensaje('error', result.errors.join('<br>'));
+            return; // No continuar
+        }
+        
+        if (!response.ok) {
+            // Error del servidor
+            throw new Error("Error interno del servidor");
+        }
+        
+        console.log("Guardado en DB con ID:", result.id);
+        
+        // Mostrar mensaje de éxito
+        const mensajeExito = document.getElementById("mensaje-exito");
+        mensajeExito.style.display = "block";
+        
+        // Ocultar el mensaje después de 3 segundos
+        setTimeout(() => {
+            mensajeExito.style.display = "none";
+        }, 3000);
+        
+    } catch (error) {
+        mostrarMensajeLocal("error", error.message);
+        // No continuar con la ejecución
+        return;
+    }
 });
 </script>
 

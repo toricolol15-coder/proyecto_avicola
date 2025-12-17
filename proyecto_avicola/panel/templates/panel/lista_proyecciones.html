@@ -1,0 +1,110 @@
+{% extends "panel/base.html" %}
+
+{% block title %}Proyecciones Guardadas - EcoRación{% endblock %}
+
+{% block content %}
+<h1 class="page-title mb-4">Proyecciones de Consumo Guardadas</h1>
+
+<div class="card shadow-sm p-4">
+    <h5 class="mb-3">Listado de proyecciones calculadas</h5>
+    <table class="table table-striped align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>Ración base</th>
+                <th>Animales</th>
+                <th>Periodo</th>
+                <th>Total Máximo</th>
+                <th>Con Ahorro (15%)</th>
+                <th>Ahorro Total</th>
+                <th>Fecha</th>
+                <th style="width: 100px;">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in proyecciones %}
+            <tr>
+                <td>{{ p.racion_base.tipo_animal }} - {{ p.racion_base.peso }}kg</td>
+                <td>{{ p.cantidad_animales }}</td>
+                <td>{{ p.periodo_dias }} días</td>
+                <td>{{ p.total_granos_kg|add:p.total_algas_kg|add:p.total_carbonato_kg }} kg</td>
+                <td>{{ p.total_granos_ahorro_kg|add:p.total_algas_ahorro_kg|add:p.total_carbonato_ahorro_kg }} kg</td>
+                <td class="text-success">{{ p.ahorro_total_kg }} kg</td>
+                <td>{{ p.creado_en|date:"d/m/Y H:i" }}</td>
+                <td>
+                    <button class="btn btn-sm btn-info" onclick="verDetalle({{ p.id }})">Ver detalle</button>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8" class="text-center text-muted">No hay proyecciones guardadas aún.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Modal para ver detalle -->
+<div class="modal fade" id="detalleModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Detalle de Proyección</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="detalleContent">
+                <!-- Se cargará dinámicamente -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function verDetalle(id) {
+    fetch(`/api/proyeccion/${id}/`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('detalleContent').innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Ración base</h6>
+                        <p><strong>Tipo:</strong> ${data.racion_base.tipo_animal}</p>
+                        <p><strong>Peso:</strong> ${data.racion_base.peso} kg</p>
+                        <p><strong>Granos:</strong> ${data.racion_base.granos} ${data.unidad_racion}</p>
+                        <p><strong>Algas:</strong> ${data.racion_base.algas} ${data.unidad_racion}</p>
+                        <p><strong>Días:</strong> ${data.racion_base.dias}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Proyección</h6>
+                        <p><strong>Animales:</strong> ${data.cantidad_animales}</p>
+                        <p><strong>Periodo:</strong> ${data.periodo_dias} días</p>
+                        <p><strong>Unidad:</strong> ${data.unidad_racion}</p>
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Cantidades Máximas</h6>
+                        <p><strong>Granos:</strong> ${data.cantidades_maximas.granos_kg} kg</p>
+                        <p><strong>Algas:</strong> ${data.cantidades_maximas.algas_kg} kg</p>
+                        <p><strong>Carbonato:</strong> ${data.cantidades_maximas.carbonato_kg} kg</p>
+                        <p><strong>Total:</strong> ${data.cantidades_maximas.total_kg} kg</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Con Ahorro (15% menos)</h6>
+                        <p><strong>Granos:</strong> ${data.cantidades_con_ahorro.granos_kg} kg</p>
+                        <p><strong>Algas:</strong> ${data.cantidades_con_ahorro.algas_kg} kg</p>
+                        <p><strong>Carbonato:</strong> ${data.cantidades_con_ahorro.carbonato_kg} kg</p>
+                        <p><strong>Total:</strong> ${data.cantidades_con_ahorro.total_kg} kg</p>
+                        <p><strong>Ahorro total:</strong> <span class="text-success">${data.ahorros.total_kg} kg</span></p>
+                    </div>
+                </div>
+            `;
+            new bootstrap.Modal(document.getElementById('detalleModal')).show();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error al cargar el detalle');
+        });
+}
+</script>
+{% endblock %}

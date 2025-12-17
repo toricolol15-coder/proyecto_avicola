@@ -2,10 +2,16 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.http import JsonResponse
-from .models import RegistroRacion, RegistroUsuario
+from django.http import HttpResponse, JsonResponse
+import openpyxl
+from openpyxl.styles import Font, PatternFill
+from .models import RegistroRacion, RegistroUsuario, ProyeccionRacion
 from .models import Insumo  # Asegúrate de ponerlo arriba con tus otros imports
+from .models import ProduccionHuevos
 import json
+from decimal import Decimal, InvalidOperation
+from datetime import date
+from collections import defaultdict
 
 
 
@@ -58,8 +64,22 @@ def logout_view(request):
 
 # ================== PÁGINAS PROTEGIDAS ==================
 @login_required
+@login_required
 def dashboard(request):
-    return render(request, "panel/dashboard.html")
+    # Datos para gráfico dinámico de producción de huevos
+    producciones_for_chart = ProduccionHuevos.objects.all().order_by('fecha')
+    data_by_date = defaultdict(lambda: {'PEQUEÑO': 0, 'MEDIANO': 0, 'GRANDE': 0, 'EXTRA_GRANDE': 0})
+    for prod in producciones_for_chart:
+        data_by_date[prod.fecha][prod.tipo_huevo] += prod.cantidad
+    fechas = sorted([fecha.strftime('%Y-%m-%d') for fecha in data_by_date.keys()])
+    tipos = {}
+    for tipo in ['PEQUEÑO', 'MEDIANO', 'GRANDE', 'EXTRA_GRANDE']:
+        tipos[tipo] = [data_by_date[date.fromisoformat(fecha)][tipo] for fecha in fechas]
+
+    return render(request, "panel/dashboard.html", {
+        "fechas_json": json.dumps(fechas),
+        "tipos_json": json.dumps(tipos)
+    })
 
 @login_required
 def raciones(request):
@@ -90,9 +110,23 @@ def proyecciones(request):
             "dias": r.dias,
         }
 
+    # Datos para gráfico dinámico de producción de huevos
+    producciones = ProduccionHuevos.objects.all().order_by('fecha')
+    fechas = []
+    cantidades = []
+    tipos = {'PEQUEÑO': [], 'MEDIANO': [], 'GRANDE': [], 'EXTRA_GRANDE': []}
+    for prod in producciones:
+        fechas.append(prod.fecha.strftime('%Y-%m-%d'))
+        cantidades.append(prod.cantidad)
+        for tipo in tipos:
+            tipos[tipo].append(prod.cantidad if prod.tipo_huevo == tipo else 0)
+
     return render(request, "panel/proyecciones.html", {
         "raciones": opciones,
-        "raciones_data_json": json.dumps(raciones_data)
+        "raciones_data_json": json.dumps(raciones_data),
+        "fechas_json": json.dumps(fechas),
+        "cantidades_json": json.dumps(cantidades),
+        "tipos_json": json.dumps(tipos)
     })
 
 @login_required
@@ -121,11 +155,51 @@ def registro_editar(request, id):
     registro = get_object_or_404(RegistroRacion, id=id)
 
     if request.method == "POST":
-        registro.tipo_animal = request.POST.get("tipo_animal")
-        registro.peso = request.POST.get("peso")
-        registro.granos = request.POST.get("granos")
-        registro.algas = request.POST.get("algas")
-        registro.dias = request.POST.get("dias")
+        tipo_animal = request.POST.get("tipo_animal")
+        peso_str = request.POST.get("peso")
+        granos_str = request.POST.get("granos")
+        algas_str = request.POST.get("algas")
+        dias = request.POST.get("dias")
+
+        # Validar campos decimales
+        try:
+            peso = Decimal(peso_str)
+            if peso < 0 or peso >= 10000:  # max_digits=6, decimal_places=2 -> max 9999.99
+                raise ValueError("Valor fuera de rango")
+        except (InvalidOperation, ValueError):
+            return render(request, "panel/editar_registro.html", {
+                "registro": registro,
+                "dias": [("Lunes", "L"), ("Martes", "M"), ("Miércoles", "X"), ("Jueves", "J"), ("Viernes", "V"), ("Sábado", "S"), ("Domingo", "D")],
+                "error": "El peso debe ser un número válido entre 0 y 9999.99"
+            })
+
+        try:
+            granos = Decimal(granos_str)
+            if granos < 0 or granos >= 10000:
+                raise ValueError("Valor fuera de rango")
+        except (InvalidOperation, ValueError):
+            return render(request, "panel/editar_registro.html", {
+                "registro": registro,
+                "dias": [("Lunes", "L"), ("Martes", "M"), ("Miércoles", "X"), ("Jueves", "J"), ("Viernes", "V"), ("Sábado", "S"), ("Domingo", "D")],
+                "error": "Los granos deben ser un número válido entre 0 y 9999.99"
+            })
+
+        try:
+            algas = Decimal(algas_str)
+            if algas < 0 or algas >= 10000:
+                raise ValueError("Valor fuera de rango")
+        except (InvalidOperation, ValueError):
+            return render(request, "panel/editar_registro.html", {
+                "registro": registro,
+                "dias": [("Lunes", "L"), ("Martes", "M"), ("Miércoles", "X"), ("Jueves", "J"), ("Viernes", "V"), ("Sábado", "S"), ("Domingo", "D")],
+                "error": "Las algas deben ser un número válido entre 0 y 9999.99"
+            })
+
+        registro.tipo_animal = tipo_animal
+        registro.peso = peso
+        registro.granos = granos
+        registro.algas = algas
+        registro.dias = dias
         registro.save()
         return redirect("registros")
 
@@ -140,26 +214,88 @@ def registro_editar(request, id):
 @login_required
 def guardar_racion(request):
     if request.method == "POST":
-        tipo = request.POST.get("tipo_animal")
-        peso = request.POST.get("peso")
-        granos = request.POST.get("granos")
-        algas = request.POST.get("algas")
-        dias_list = request.POST.getlist("dias")  # lista de días seleccionados
-        dias = " - ".join(dias_list)  # convertir a string tipo "Lunes - Martes"
+        try:
+            print("DEBUG: Iniciando guardar_racion")
+            print(f"DEBUG: Headers: {dict(request.headers)}")
+            print(f"DEBUG: POST data: {dict(request.POST)}")
+            
+            tipo = request.POST.get("tipo_animal")
+            peso_str = request.POST.get("peso")
+            granos_str = request.POST.get("granos")
+            algas_str = request.POST.get("algas")
+            dias_list = request.POST.getlist("dias")  # lista de días seleccionados
 
-        registro = RegistroRacion.objects.create(
-            tipo_animal=tipo,
-            peso=peso,
-            granos=granos,
-            algas=algas,
-            dias=dias
-        )
+            print(f"DEBUG: tipo={tipo}, peso_str={peso_str}, granos_str={granos_str}, algas_str={algas_str}, dias_list={dias_list}")
 
-        # Si es petición AJAX, devuelve JSON
-        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return JsonResponse({"ok": True, "id": registro.id})
+            errors = []
 
-        return redirect("registros")
+            # Validar tipo_animal
+            if not tipo or len(tipo) > 50:
+                errors.append("Tipo de animal inválido")
+
+            # Validar dias
+            if not dias_list:
+                errors.append("Debe seleccionar al menos un día")
+
+            dias = " - ".join(dias_list)
+            if len(dias) > 60:
+                errors.append("Demasiados días seleccionados")
+
+            # Validar campos decimales
+            try:
+                peso = Decimal(peso_str)
+                if peso <= 0 or peso >= 10000:
+                    errors.append("Peso debe estar entre 0.01 y 9999.99")
+            except (InvalidOperation, ValueError):
+                errors.append("Peso debe ser un número válido")
+
+            try:
+                granos = Decimal(granos_str)
+                if granos < 0 or granos >= 10000:
+                    errors.append("Granos debe estar entre 0 y 9999.99")
+            except (InvalidOperation, ValueError):
+                errors.append("Granos debe ser un número válido")
+
+            try:
+                algas = Decimal(algas_str)
+                if algas < 0 or algas >= 10000:
+                    errors.append("Algas debe estar entre 0 y 9999.99")
+            except (InvalidOperation, ValueError):
+                errors.append("Algas debe ser un número válido")
+
+            print(f"DEBUG: errors={errors}")
+
+            # Si hay errores, retornar JSON para AJAX
+            if errors:
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    print("DEBUG: Retornando errores JSON")
+                    return JsonResponse({'success': False, 'errors': errors})
+                return redirect("raciones")
+
+            registro = RegistroRacion.objects.create(
+                tipo_animal=tipo,
+                peso=peso,
+                granos=granos,
+                algas=algas,
+                dias=dias
+            )
+
+            # Si es petición AJAX, devuelve JSON de éxito
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                print("DEBUG: Retornando éxito JSON")
+                return JsonResponse({"success": True, "id": registro.id})
+
+            return redirect("registros")
+
+        except Exception as e:
+            print(f"DEBUG: Exception caught: {e}")
+            import traceback
+            print(f"DEBUG: Traceback: {traceback.format_exc()}")
+            # Capturar cualquier excepción y retornar JSON para AJAX
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                print("DEBUG: Retornando error JSON por excepción")
+                return JsonResponse({'success': False, 'errors': ['Error interno del servidor']})
+            return redirect("raciones")
 
     return redirect("raciones")
 
@@ -238,6 +374,189 @@ def stock_crear(request):
         )
         return redirect("stock")
 
+
+# ================== PRODUCCIÓN DE HUEVOS ==================
+@login_required
+def produccion_huevos(request):
+    if request.method == "POST":
+        fecha_str = request.POST.get("fecha")
+        cantidad_str = request.POST.get("cantidad")
+        tipo_huevo = request.POST.get("tipo_huevo") or 'MEDIANO'
+
+        # Fecha es automática, no validar
+        fecha = date.today()
+
+        # Validar cantidad
+        try:
+            cantidad = int(cantidad_str)
+            if cantidad <= 0:
+                raise ValueError
+        except ValueError:
+            producciones = ProduccionHuevos.objects.all().order_by('-fecha')
+            return render(request, "panel/produccion_huevos.html", {
+                "producciones": producciones,
+                "today": date.today(),
+                "error": "La cantidad debe ser un número entero positivo"
+            })
+
+        # Validar tipo_huevo
+        if tipo_huevo not in ['PEQUEÑO', 'MEDIANO', 'GRANDE', 'EXTRA_GRANDE']:
+            producciones = ProduccionHuevos.objects.all().order_by('-fecha')
+            return render(request, "panel/produccion_huevos.html", {
+                "producciones": producciones,
+                "today": date.today(),
+                "error": "Tipo de huevo inválido"
+            })
+
+        # Verificar si ya existe un registro para esta fecha y tipo de huevo
+        produccion_existente = ProduccionHuevos.objects.filter(fecha=fecha, tipo_huevo=tipo_huevo).first()
+        
+        if produccion_existente:
+            # Si existe, sumar la cantidad
+            produccion_existente.cantidad += cantidad
+            produccion_existente.save()
+        else:
+            # Si no existe, crear nuevo registro
+            ProduccionHuevos.objects.create(
+                fecha=fecha,
+                cantidad=cantidad,
+                tipo_huevo=tipo_huevo
+            )
+        return redirect("produccion_huevos")
+
+    producciones = ProduccionHuevos.objects.all().order_by('-fecha')
+
+    # Datos para gráfico dinámico de producción de huevos
+    producciones_for_chart = ProduccionHuevos.objects.all().order_by('fecha')
+    data_by_date = defaultdict(lambda: {'PEQUEÑO': 0, 'MEDIANO': 0, 'GRANDE': 0, 'EXTRA_GRANDE': 0})
+    for prod in producciones_for_chart:
+        data_by_date[prod.fecha][prod.tipo_huevo] += prod.cantidad
+    fechas = sorted([fecha.strftime('%Y-%m-%d') for fecha in data_by_date.keys()])
+    tipos = {}
+    for tipo in ['PEQUEÑO', 'MEDIANO', 'GRANDE', 'EXTRA_GRANDE']:
+        tipos[tipo] = [data_by_date[date.fromisoformat(fecha)][tipo] for fecha in fechas]
+
+    return render(request, "panel/produccion_huevos.html", {
+        "producciones": producciones,
+        "today": date.today(),
+        "fechas_json": json.dumps(fechas),
+        "tipos_json": json.dumps(tipos)
+    })
+
+
+@login_required
+def produccion_huevos_agregar(request):
+    if request.method == "POST":
+        lote_id = request.POST.get("lote")
+        fecha_str = request.POST.get("fecha")
+        cantidad_str = request.POST.get("cantidad")
+        tipo_huevo = request.POST.get("tipo_huevo") or 'MEDIANO'  # default
+
+        try:
+            cantidad = int(cantidad_str)
+            if cantidad <= 0:
+                raise ValueError
+        except ValueError:
+            return render(request, "panel/produccion_huevos_agregar.html", {
+                "lotes": LoteGallinas.objects.filter(activo=True),
+                "error": "La cantidad debe ser un número entero positivo"
+            })
+
+        # Convertir fecha
+        try:
+            fecha = date.fromisoformat(fecha_str)
+        except ValueError:
+            return render(request, "panel/produccion_huevos_agregar.html", {
+                "lotes": LoteGallinas.objects.filter(activo=True),
+                "error": "Fecha inválida"
+            })
+
+        lote = None
+        if lote_id:
+            lote = get_object_or_404(LoteGallinas, id=lote_id)
+
+        # Verificar si ya existe un registro para esta fecha y tipo de huevo
+        produccion_existente = ProduccionHuevos.objects.filter(fecha=fecha, tipo_huevo=tipo_huevo).first()
+        
+        if produccion_existente:
+            # Si existe, sumar la cantidad
+            produccion_existente.cantidad += cantidad
+            produccion_existente.save()
+        else:
+            # Si no existe, crear nuevo registro
+            ProduccionHuevos.objects.create(
+                lote=lote,
+                fecha=fecha,
+                cantidad=cantidad,
+                tipo_huevo=tipo_huevo
+            )
+        return redirect("produccion_huevos")
+
+    lotes = LoteGallinas.objects.filter(activo=True)
+    return render(request, "panel/produccion_huevos_agregar.html", {"lotes": lotes})
+
+
+@login_required
+def produccion_huevos_editar(request, id):
+    produccion = get_object_or_404(ProduccionHuevos, id=id)
+
+    if request.method == "POST":
+        cantidad_str = request.POST.get("cantidad")
+        tipo_huevo = request.POST.get("tipo_huevo")
+
+        # Fecha es automática, no validar
+        fecha = date.today()
+
+        # Validar cantidad
+        try:
+            cantidad = int(cantidad_str)
+            if cantidad <= 0:
+                raise ValueError
+        except ValueError:
+            return render(request, "panel/produccion_huevos_editar.html", {
+                "produccion": produccion,
+                "error": "La cantidad debe ser un número entero positivo"
+            })
+
+        # Validar tipo_huevo
+        if tipo_huevo not in ['PEQUEÑO', 'MEDIANO', 'GRANDE', 'EXTRA_GRANDE']:
+            return render(request, "panel/produccion_huevos_editar.html", {
+                "produccion": produccion,
+                "error": "Tipo de huevo inválido"
+            })
+
+        # Si el tipo de huevo cambió, verificar si ya existe un registro para la nueva combinación
+        if produccion.tipo_huevo != tipo_huevo or produccion.fecha != fecha:
+            # Buscar si ya existe un registro para esta fecha y nuevo tipo
+            produccion_existente = ProduccionHuevos.objects.filter(fecha=fecha, tipo_huevo=tipo_huevo).exclude(id=id).first()
+            
+            if produccion_existente:
+                # Si existe, sumar la cantidad al registro existente y eliminar el actual
+                produccion_existente.cantidad += cantidad
+                produccion_existente.save()
+                produccion.delete()
+            else:
+                # Si no existe, actualizar el registro actual
+                produccion.fecha = fecha
+                produccion.cantidad = cantidad
+                produccion.tipo_huevo = tipo_huevo
+                produccion.save()
+        else:
+            # Si no cambió el tipo ni la fecha, solo actualizar cantidad
+            produccion.cantidad = cantidad
+            produccion.save()
+            
+        return redirect("produccion_huevos")
+
+    return render(request, "panel/produccion_huevos_editar.html", {"produccion": produccion, "today": date.today()})
+
+
+@login_required
+def produccion_huevos_eliminar(request, id):
+    produccion = get_object_or_404(ProduccionHuevos, id=id)
+    produccion.delete()
+    return redirect("produccion_huevos")
+
     return render(request, "panel/stock_crear.html")
 
 
@@ -263,3 +582,172 @@ def stock_editar(request, id):
         return redirect('stock')
 
     return render(request, 'panel/editar_stock.html', {'insumo': insumo})
+
+
+@login_required
+def api_proyeccion_detalle(request, id):
+    proyeccion = get_object_or_404(ProyeccionRacion, id=id)
+    data = {
+        'id': proyeccion.id,
+        'racion_base': {
+            'tipo_animal': proyeccion.racion_base.tipo_animal,
+            'peso': float(proyeccion.racion_base.peso),
+            'granos': float(proyeccion.racion_base.granos),
+            'algas': float(proyeccion.racion_base.algas),
+            'dias': proyeccion.racion_base.dias,
+        },
+        'cantidad_animales': proyeccion.cantidad_animales,
+        'periodo_dias': proyeccion.periodo_dias,
+        'unidad_racion': proyeccion.unidad_racion,
+        'cantidades_maximas': {
+            'granos_kg': float(proyeccion.total_granos_kg),
+            'algas_kg': float(proyeccion.total_algas_kg),
+            'carbonato_kg': float(proyeccion.total_carbonato_kg),
+            'total_kg': float(proyeccion.total_granos_kg + proyeccion.total_algas_kg + proyeccion.total_carbonato_kg),
+        },
+        'cantidades_con_ahorro': {
+            'granos_kg': float(proyeccion.total_granos_ahorro_kg),
+            'algas_kg': float(proyeccion.total_algas_ahorro_kg),
+            'carbonato_kg': float(proyeccion.total_carbonato_ahorro_kg),
+            'total_kg': float(proyeccion.total_granos_ahorro_kg + proyeccion.total_algas_ahorro_kg + proyeccion.total_carbonato_ahorro_kg),
+        },
+        'ahorros': {
+            'granos_kg': float(proyeccion.ahorro_granos_kg),
+            'algas_kg': float(proyeccion.ahorro_algas_kg),
+            'carbonato_kg': float(proyeccion.ahorro_carbonato_kg),
+            'total_kg': float(proyeccion.ahorro_total_kg),
+        },
+        'creado_en': proyeccion.creado_en.isoformat(),
+    }
+    return JsonResponse(data)
+
+
+@login_required
+def lista_proyecciones(request):
+    proyecciones = ProyeccionRacion.objects.all().order_by('-creado_en')
+    return render(request, "panel/lista_proyecciones.html", {"proyecciones": proyecciones})
+
+
+@login_required
+def exportar_proyecciones_excel(request):
+    # Crear workbook
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Proyecciones de Consumo"
+
+    # Estilos
+    header_font = Font(bold=True, color="FFFFFF")
+    header_fill = PatternFill(start_color="4CAF50", end_color="4CAF50", fill_type="solid")
+
+    # Headers
+    headers = [
+        'Fecha de Creación', 'Ración Base', 'Animales', 'Periodo (días)', 'Unidad',
+        'Granos Máximo (kg)', 'Algas Máximo (kg)', 'Carbonato Máximo (kg)', 'Total Máximo (kg)',
+        'Granos con Ahorro (kg)', 'Algas con Ahorro (kg)', 'Carbonato con Ahorro (kg)', 'Total con Ahorro (kg)',
+        'Ahorro Total (kg)'
+    ]
+    
+    for col_num, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col_num, value=header)
+        cell.font = header_font
+        cell.fill = header_fill
+
+    # Datos
+    proyecciones = ProyeccionRacion.objects.all().order_by('-creado_en')
+    
+    for row_num, proyeccion in enumerate(proyecciones, 2):
+        ws.cell(row=row_num, column=1, value=proyeccion.creado_en.strftime('%d/%m/%Y %H:%M'))
+        ws.cell(row=row_num, column=2, value=f"{proyeccion.racion_base.tipo_animal} - {proyeccion.racion_base.peso}kg")
+        ws.cell(row=row_num, column=3, value=proyeccion.cantidad_animales)
+        ws.cell(row=row_num, column=4, value=proyeccion.periodo_dias)
+        ws.cell(row=row_num, column=5, value=proyeccion.unidad_racion)
+        ws.cell(row=row_num, column=6, value=float(proyeccion.total_granos_kg))
+        ws.cell(row=row_num, column=7, value=float(proyeccion.total_algas_kg))
+        ws.cell(row=row_num, column=8, value=float(proyeccion.total_carbonato_kg))
+        ws.cell(row=row_num, column=9, value=float(proyeccion.total_granos_kg + proyeccion.total_algas_kg + proyeccion.total_carbonato_kg))
+        ws.cell(row=row_num, column=10, value=float(proyeccion.total_granos_ahorro_kg))
+        ws.cell(row=row_num, column=11, value=float(proyeccion.total_algas_ahorro_kg))
+        ws.cell(row=row_num, column=12, value=float(proyeccion.total_carbonato_ahorro_kg))
+        ws.cell(row=row_num, column=13, value=float(proyeccion.total_granos_ahorro_kg + proyeccion.total_algas_ahorro_kg + proyeccion.total_carbonato_ahorro_kg))
+        ws.cell(row=row_num, column=14, value=float(proyeccion.ahorro_total_kg))
+
+    # Ajustar ancho de columnas
+    for column in ws.columns:
+        max_length = 0
+        column_letter = column[0].column_letter
+        for cell in column:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(str(cell.value))
+            except:
+                pass
+        adjusted_width = (max_length + 2)
+        ws.column_dimensions[column_letter].width = adjusted_width
+
+    # Respuesta HTTP
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=proyecciones_consumo.xlsx'
+    
+    wb.save(response)
+    return response
+
+
+@login_required
+def guardar_proyeccion(request):
+    if request.method == "POST":
+        try:
+            print("DEBUG: Iniciando guardar_proyeccion")
+            print(f"DEBUG: POST data: {dict(request.POST)}")
+            
+            racion_id = request.POST.get("racion_id")
+            cantidad_animales = int(request.POST.get("cantidad_animales"))
+            periodo_dias = int(request.POST.get("periodo_dias"))
+            unidad_racion = request.POST.get("unidad_racion")
+            
+            # Cantidades máximas
+            total_granos = Decimal(request.POST.get("total_granos"))
+            total_algas = Decimal(request.POST.get("total_algas"))
+            total_carbonato = Decimal(request.POST.get("total_carbonato"))
+            
+            # Cantidades con ahorro
+            total_granos_ahorro = Decimal(request.POST.get("total_granos_ahorro"))
+            total_algas_ahorro = Decimal(request.POST.get("total_algas_ahorro"))
+            total_carbonato_ahorro = Decimal(request.POST.get("total_carbonato_ahorro"))
+            ahorro_total = Decimal(request.POST.get("ahorro_total"))
+            
+            # Obtener la ración base
+            racion = get_object_or_404(RegistroRacion, id=racion_id)
+            
+            # Crear la proyección
+            proyeccion = ProyeccionRacion.objects.create(
+                racion_base=racion,
+                cantidad_animales=cantidad_animales,
+                periodo_dias=periodo_dias,
+                unidad_racion=unidad_racion,
+                total_granos_kg=total_granos,
+                total_algas_kg=total_algas,
+                total_carbonato_kg=total_carbonato,
+                total_granos_ahorro_kg=total_granos_ahorro,
+                total_algas_ahorro_kg=total_algas_ahorro,
+                total_carbonato_ahorro_kg=total_carbonato_ahorro,
+                ahorro_granos_kg=total_granos - total_granos_ahorro,
+                ahorro_algas_kg=total_algas - total_algas_ahorro,
+                ahorro_carbonato_kg=total_carbonato - total_carbonato_ahorro,
+                ahorro_total_kg=ahorro_total,
+                creado_por=request.user
+            )
+            
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({"success": True, "id": proyeccion.id})
+            
+            return redirect("proyecciones")
+            
+        except Exception as e:
+            print(f"DEBUG: Exception in guardar_proyeccion: {e}")
+            import traceback
+            print(f"DEBUG: Traceback: {traceback.format_exc()}")
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'errors': ['Error interno del servidor']})
+            return redirect("proyecciones")
+    
+    return redirect("proyecciones")

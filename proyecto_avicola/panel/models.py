@@ -194,3 +194,61 @@ class RegistroRacion(models.Model):
         return f"{self.tipo_animal} - {self.peso}kg"
 
 
+class ProduccionHuevos(models.Model):
+    TIPO_HUEVO_CHOICES = [
+        ('PEQUEÑO', 'Pequeño'),
+        ('MEDIANO', 'Mediano'),
+        ('GRANDE', 'Grande'),
+        ('EXTRA_GRANDE', 'Extra Grande'),
+    ]
+
+    fecha = models.DateField()
+    cantidad = models.PositiveIntegerField()
+    tipo_huevo = models.CharField(max_length=15, choices=TIPO_HUEVO_CHOICES, default='MEDIANO')
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.cantidad} huevos {self.tipo_huevo} ({self.fecha})"
+
+
+class ProyeccionRacion(models.Model):
+    racion_base = models.ForeignKey(
+        RegistroRacion,
+        on_delete=models.CASCADE,
+        related_name='proyecciones'
+    )
+    cantidad_animales = models.PositiveIntegerField()
+    periodo_dias = models.PositiveIntegerField()
+    unidad_racion = models.CharField(max_length=2, choices=[('g', 'Gramos'), ('kg', 'Kilogramos')])
+    
+    # Cantidades calculadas (máximas)
+    total_granos_kg = models.DecimalField(max_digits=10, decimal_places=2)
+    total_algas_kg = models.DecimalField(max_digits=10, decimal_places=2)
+    total_carbonato_kg = models.DecimalField(max_digits=10, decimal_places=2)
+    
+    # Cantidades con ahorro del 15%
+    total_granos_ahorro_kg = models.DecimalField(max_digits=10, decimal_places=2)
+    total_algas_ahorro_kg = models.DecimalField(max_digits=10, decimal_places=2)
+    total_carbonato_ahorro_kg = models.DecimalField(max_digits=10, decimal_places=2)
+    
+    # Ahorro total en kg
+    ahorro_granos_kg = models.DecimalField(max_digits=10, decimal_places=2)
+    ahorro_algas_kg = models.DecimalField(max_digits=10, decimal_places=2)
+    ahorro_carbonato_kg = models.DecimalField(max_digits=10, decimal_places=2)
+    ahorro_total_kg = models.DecimalField(max_digits=10, decimal_places=2)
+    
+    creado_en = models.DateTimeField(auto_now_add=True)
+    creado_por = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    class Meta:
+        ordering = ['-creado_en']
+
+    def __str__(self):
+        return f"Proyección {self.id} - {self.racion_base.tipo_animal} ({self.periodo_dias} días)"
+
+

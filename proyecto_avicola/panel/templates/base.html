@@ -61,7 +61,8 @@
 
             <li><a href="{% url 'stock' %}" class="sidebar-link {% if request.path == '/stock/' %}active{% endif %}">Stock</a></li>
 
-            <li><a href="{% url 'proyecciones' %}" class="sidebar-link {% if request.path == '/proyecciones/' %}active{% endif %}">Proyecciones</a></li>
+            <li><a href="{% url 'proyecciones' %}" class="sidebar-link {% if request.path == '/proyecciones/' %}active{% endif %}">Calcular Proyección</a></li>
+            <li><a href="{% url 'lista_proyecciones' %}" class="sidebar-link {% if request.path == '/lista-proyecciones/' %}active{% endif %}">Lista de Proyecciones</a></li>
             <li><span class="sidebar-link">Reportes</span></li>
             <li><a href="{% url 'configuraciones' %}" class="sidebar-link {% if request.path == '/configuraciones/' %}active{% endif %}">Configuración</a></li>
             <li><a href="{% url 'logout' %}" class="sidebar-link">Cerrar sesión</a></li>
