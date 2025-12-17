@@ -13,8 +13,15 @@ from decimal import Decimal, InvalidOperation
 from datetime import date
 from collections import defaultdict
 
+from django.contrib.auth.decorators import login_required 
+from django.shortcuts import render, redirect 
+from .models import Insumo
 
 
+from decimal import Decimal 
+from django.shortcuts import get_object_or_404, render, redirect 
+from django.contrib.auth.decorators import login_required 
+from .models import Insumo
 # ================== LOGIN ==================
 def login_view(request):
     if request.method == "POST":
@@ -323,27 +330,40 @@ def stock(request):
         'alertas_stock': alertas_stock
     })
 
+from decimal import Decimal
+from django.shortcuts import get_object_or_404, render, redirect
+from django.contrib.auth.decorators import login_required
+from .models import Insumo
+
 @login_required
 def stock_agregar(request, id):
     insumo = get_object_or_404(Insumo, id=id)
     if request.method == "POST":
         try:
-            cantidad = float(request.POST.get("cantidad", 0))
+            # Convertir a Decimal en vez de float
+            cantidad = Decimal(request.POST.get("cantidad", "0").strip())
+
             if cantidad < 0:
                 return render(request, "panel/stock_agregar.html", {
                     "insumo": insumo,
                     "error": "La cantidad no puede ser negativa"
                 })
-            insumo.stock_actual += cantidad
+
+            insumo.stock_actual += cantidad   # ✅ Decimal + Decimal
             insumo.save()
             return redirect("stock")
-        except ValueError:
+
+        except (ValueError, ArithmeticError):
             return render(request, "panel/stock_agregar.html", {
                 "insumo": insumo,
                 "error": "Ingresa un número válido"
             })
+
     return render(request, "panel/stock_agregar.html", {"insumo": insumo})
 
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect
+from .models import Insumo
 
 @login_required
 def stock_crear(request):
@@ -372,7 +392,11 @@ def stock_crear(request):
             stock_minimo=stock_minimo,
             porcentaje_ocupado_bodega=porcentaje_bodega
         )
-        return redirect("stock")
+        return redirect("stock")  # redirige a la vista de listado
+
+    # 🔴 Aquí estaba faltando: devolver el formulario vacío en GET
+    return render(request, "panel/stock_crear.html")
+
 
 
 # ================== PRODUCCIÓN DE HUEVOS ==================

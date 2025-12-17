@@ -124,77 +124,6 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
-// Validaciones con animaciones para el formulario de stock
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.querySelector('form');
-    
-    form.addEventListener('submit', function(e) {
-        // Validar nombre
-        const nombre = document.getElementById('nombre').value.trim();
-        if (!nombre) {
-            e.preventDefault();
-            mostrarMensaje('error', 'El nombre del insumo es obligatorio');
-            document.getElementById('nombre').focus();
-            return;
-        }
-        
-        if (nombre.length < 2) {
-            e.preventDefault();
-            mostrarMensaje('error', 'El nombre debe tener al menos 2 caracteres');
-            document.getElementById('nombre').focus();
-            return;
-        }
-        
-        // Validar stock actual
-        const stockActual = document.getElementById('stock_actual').value;
-        if (!stockActual || stockActual === '') {
-            e.preventDefault();
-            mostrarMensaje('error', 'El stock actual es obligatorio');
-            document.getElementById('stock_actual').focus();
-            return;
-        }
-        
-        const stockNum = parseFloat(stockActual);
-        if (isNaN(stockNum) || stockNum < 0) {
-            e.preventDefault();
-            mostrarMensaje('error', 'El stock actual debe ser un número positivo');
-            document.getElementById('stock_actual').focus();
-            return;
-        }
-        
-        // Validar stock mínimo
-        const stockMinimo = document.getElementById('stock_minimo').value;
-        if (!stockMinimo || stockMinimo === '') {
-            e.preventDefault();
-            mostrarMensaje('error', 'El stock mínimo es obligatorio');
-            document.getElementById('stock_minimo').focus();
-            return;
-        }
-        
-        const minimoNum = parseFloat(stockMinimo);
-        if (isNaN(minimoNum) || minimoNum < 0) {
-            e.preventDefault();
-            mostrarMensaje('error', 'El stock mínimo debe ser un número positivo');
-            document.getElementById('stock_minimo').focus();
-            return;
-        }
-        
-        if (minimoNum > stockNum) {
-            e.preventDefault();
-            mostrarMensaje('warning', 'El stock mínimo no puede ser mayor al stock actual');
-            document.getElementById('stock_minimo').focus();
-            return;
-        }
-        
-        // Si todo está bien, mostrar mensaje de éxito
-        mostrarMensaje('success', 'Procesando creación de insumo...');
-    });
-});
-</script>
-{% endblock %}
-
-{% block extra_js %}
 <style>
     .fw-600 {
         font-weight: 600;
@@ -202,7 +131,52 @@ document.addEventListener('DOMContentLoaded', function() {
 </style>
 
 <script>
+// Validaciones con animaciones para el formulario de stock
 document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    
+    form.addEventListener('submit', function(e) {
+        const nombre = document.getElementById('nombre').value.trim();
+        if (!nombre) {
+            e.preventDefault();
+            mostrarMensaje('error', 'El nombre del insumo es obligatorio');
+            document.getElementById('nombre').focus();
+            return;
+        }
+        if (nombre.length < 2) {
+            e.preventDefault();
+            mostrarMensaje('error', 'El nombre debe tener al menos 2 caracteres');
+            document.getElementById('nombre').focus();
+            return;
+        }
+
+        const stockActual = document.getElementById('stock_actual').value;
+        const stockNum = parseFloat(stockActual);
+        if (!stockActual || isNaN(stockNum) || stockNum < 0) {
+            e.preventDefault();
+            mostrarMensaje('error', 'El stock actual debe ser un número positivo');
+            document.getElementById('stock_actual').focus();
+            return;
+        }
+
+        const stockMinimo = document.getElementById('stock_minimo').value;
+        const minimoNum = parseFloat(stockMinimo);
+        if (!stockMinimo || isNaN(minimoNum) || minimoNum < 0) {
+            e.preventDefault();
+            mostrarMensaje('error', 'El stock mínimo debe ser un número positivo');
+            document.getElementById('stock_minimo').focus();
+            return;
+        }
+        if (minimoNum > stockNum) {
+            e.preventDefault();
+            mostrarMensaje('warning', 'El stock mínimo no puede ser mayor al stock actual');
+            document.getElementById('stock_minimo').focus();
+            return;
+        }
+
+        mostrarMensaje('success', 'Procesando creación de insumo...');
+    });
+
     // Sincronizar tema oscuro
     try {
         const dark = localStorage.getItem('modo_oscuro');
