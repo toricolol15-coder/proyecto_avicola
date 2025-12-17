@@ -69,20 +69,25 @@
                         <td>{{ insumo.unidad }}</td>
                         <td>{{ insumo.porcentaje_ocupado_bodega }}%</td>
                         <td>
-                            {% if insumo.stock_actual <= insumo.stock_minimo %}
-                                <span class="badge bg-danger">Crítico</span>
-                            {% elif insumo.stock_actual <= insumo.stock_minimo|add:"10" %}
-                                <span class="badge bg-warning text-dark">Bajo</span>
+                            {% if insumo.estado == "Crítico" %}
+                                <span class="badge bg-danger">🚨 Crítico</span>
+                            {% elif insumo.estado == "Bajo" %}
+                                <span class="badge bg-warning text-dark">⚠️ Bajo</span>
                             {% else %}
-                                <span class="badge bg-success">Normal</span>
+                                <span class="badge bg-success">✅ Normal</span>
                             {% endif %}
                         </td>
                         <td>
                             <div class="d-flex gap-1">
-                                <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modalAgregar" data-insumo-id="{{ insumo.id }}" data-insumo-nombre="{{ insumo.nombre }}">
+                                <button class="btn btn-sm btn-outline-secondary" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#modalAgregar" 
+                                        data-insumo-id="{{ insumo.id }}" 
+                                        data-insumo-nombre="{{ insumo.nombre }}">
                                     Agregar
                                 </button>
-                                <a href="{% url 'stock_editar' insumo.id %}" class="btn btn-sm btn-outline-primary">Editar</a>
+                                <a href="{% url 'stock_editar' insumo.id %}" 
+                                   class="btn btn-sm btn-outline-primary">Editar</a>
                             </div>
                         </td>
                     </tr>
@@ -100,29 +105,7 @@
     </div>
 </div>
 
-<!-- ALERTAS DE STOCK -->
-{% if alertas_stock %}
-<div class="row mt-4">
-    <div class="col-lg-12">
-        <h6 class="mb-3">Alertas de Stock Activas</h6>
-        <div class="alerta-stock-card">
-            {% for alerta in alertas_stock %}
-                <div class="alerta-item">
-                    <div class="alerta-label">
-                        {% if alerta.nivel == "Crítico" %}
-                            <div class="alerta-icon-danger"></div>
-                        {% elif alerta.nivel == "Bajo" %}
-                            <div class="alerta-icon-warning"></div>
-                        {% endif %}
-                        <span>{{ alerta.nombre }}: {{ alerta.stock_actual }} restante</span>
-                    </div>
-                    <small>{{ alerta.nivel }}</small>
-                </div>
-            {% endfor %}
-        </div>
-    </div>
-</div>
-{% endif %}
+
 
 <!-- MODAL PARA AGREGAR STOCK -->
 <div class="modal fade" id="modalAgregar" tabindex="-1" aria-labelledby="modalAgregarLabel" aria-hidden="true">
@@ -160,14 +143,15 @@ document.addEventListener('DOMContentLoaded', function(){
     let countNormal = 0, countBajo = 0, countCritico = 0;
 
     {% for insumo in insumos %}
-        {% if insumo.stock_actual <= insumo.stock_minimo %}
+        {% if insumo.estado == "Crítico" %}
             countCritico++;
-        {% elif insumo.stock_actual <= insumo.stock_minimo|add:"10" %}
+        {% elif insumo.estado == "Bajo" %}
             countBajo++;
         {% else %}
             countNormal++;
         {% endif %}
     {% endfor %}
+
 
     document.getElementById('count-normal').textContent = countNormal;
     document.getElementById('count-bajo').textContent = countBajo;

@@ -307,21 +307,34 @@ def guardar_racion(request):
     return redirect("raciones")
 
 
-@login_required
+from decimal import Decimal
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from .models import Insumo
+
+
+
 def stock(request):
     insumos = Insumo.objects.all()
     alertas_stock = []
 
     for insumo in insumos:
-        if insumo.stock_actual <= insumo.stock_minimo:
+        minimo = insumo.stock_minimo
+        actual = insumo.stock_actual
+
+        if actual <= minimo * Decimal('0.5'):
             nivel = 'Crítico'
-        elif insumo.stock_actual <= insumo.stock_minimo * 2:
+        elif actual <= minimo * Decimal('1.5'):
             nivel = 'Bajo'
         else:
             nivel = 'Normal'
+
+        # 🔴 agrega el estado al objeto insumo
+        insumo.estado = nivel
+
         alertas_stock.append({
             'nombre': insumo.nombre,
-            'stock_actual': insumo.stock_actual,
+            'stock_actual': actual,
             'nivel': nivel
         })
 
@@ -329,6 +342,7 @@ def stock(request):
         'insumos': insumos,
         'alertas_stock': alertas_stock
     })
+
 
 from decimal import Decimal
 from django.shortcuts import get_object_or_404, render, redirect
