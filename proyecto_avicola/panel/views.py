@@ -234,41 +234,41 @@ def guardar_racion(request):
 
             print(f"DEBUG: tipo={tipo}, peso_str={peso_str}, granos_str={granos_str}, algas_str={algas_str}, dias_list={dias_list}")
 
-            errors = []
+            errors = {}  # Cambiar a dict para errores por campo
 
             # Validar tipo_animal
             if not tipo or len(tipo) > 50:
-                errors.append("Tipo de animal inválido")
+                errors['tipo_animal'] = "Tipo de animal inválido"
 
             # Validar dias
             if not dias_list:
-                errors.append("Debe seleccionar al menos un día")
+                errors['dias'] = "Debe seleccionar al menos un día"
 
             dias = " - ".join(dias_list)
             if len(dias) > 60:
-                errors.append("Demasiados días seleccionados")
+                errors['dias'] = "Demasiados días seleccionados"
 
             # Validar campos decimales
             try:
                 peso = Decimal(peso_str)
-                if peso <= 0 or peso >= 10000:
-                    errors.append("Peso debe estar entre 0.01 y 9999.99")
+                if peso <= 0 or peso > 10000:
+                    errors['peso'] = "El peso debe estar entre 0.01 y 10,000 kg"
             except (InvalidOperation, ValueError):
-                errors.append("Peso debe ser un número válido")
+                errors['peso'] = "El peso debe ser un número válido"
 
             try:
                 granos = Decimal(granos_str)
-                if granos < 0 or granos >= 10000:
-                    errors.append("Granos debe estar entre 0 y 9999.99")
+                if granos < 0 or granos > 10000:
+                    errors['granos'] = "Los granos deben estar entre 0 y 10,000 g"
             except (InvalidOperation, ValueError):
-                errors.append("Granos debe ser un número válido")
+                errors['granos'] = "Los granos deben ser un número válido"
 
             try:
                 algas = Decimal(algas_str)
-                if algas < 0 or algas >= 10000:
-                    errors.append("Algas debe estar entre 0 y 9999.99")
+                if algas < 0 or algas > 10000:
+                    errors['algas'] = "Las algas deben estar entre 0 y 10,000 g"
             except (InvalidOperation, ValueError):
-                errors.append("Algas debe ser un número válido")
+                errors['algas'] = "Las algas deben ser un número válido"
 
             print(f"DEBUG: errors={errors}")
 

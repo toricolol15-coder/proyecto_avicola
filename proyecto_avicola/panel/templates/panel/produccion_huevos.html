@@ -38,6 +38,16 @@
         </div>
     </div>
     <div class="col-md-8">
+        <div class="card p-4 shadow-sm text-center">
+            <h5 class="mb-3">Producción de Huevos por Fecha</h5>
+            <canvas id="produccionChart" style="max-height:300px;"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- LISTA DE PRODUCCIONES -->
+<div class="row mt-4">
+    <div class="col-12">
         <div class="card p-4 shadow-sm">
             <h5>Lista de Producciones</h5>
             <table class="table table-striped">
@@ -67,16 +77,6 @@
                     {% endfor %}
                 </tbody>
             </table>
-        </div>
-    </div>
-</div>
-
-<!-- GRÁFICO DINÁMICO -->
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="card p-4 shadow-sm text-center">
-            <h5 class="mb-3">Producción de Huevos por Fecha</h5>
-            <canvas id="produccionChart" style="max-height:300px;"></canvas>
         </div>
     </div>
 </div>

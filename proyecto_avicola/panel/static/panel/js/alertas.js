@@ -10,8 +10,9 @@ function mostrarMensaje(tipo, mensaje) {
         alerta.className = "alert";
         alerta.style.cssText = `
             position: fixed;
-            top: 20px;
-            right: 20px;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
             z-index: 9999;
             min-width: 300px;
             max-width: 500px;
@@ -32,7 +33,7 @@ function mostrarMensaje(tipo, mensaje) {
 
     // Agregar clase según tipo
     if (tipo === "error") {
-        alerta.classList.add("alert-danger");
+        alerta.classList.add("alert-warning");
     } else if (tipo === "warning") {
         alerta.classList.add("alert-warning");
     } else if (tipo === "success") {
@@ -52,7 +53,7 @@ function mostrarMensaje(tipo, mensaje) {
         alerta.classList.add("alerta-bounce");
     }
 
-    texto.textContent = mensaje;
+    texto.innerHTML = mensaje;
     alerta.style.display = "block";
 
     // Remover las animaciones después de que terminen

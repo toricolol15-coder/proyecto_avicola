@@ -30,6 +30,7 @@
                         <small class="text-muted">Animales agregados:</small>
                         <div id="lista-animales" class="d-flex flex-wrap gap-1 mt-1"></div>
                     </div>
+                    <div class="error-message" id="error-tipo_animal"></div>
                 </div>
 
                 <!-- Peso -->
@@ -39,6 +40,7 @@
                         <input type="text" class="form-control" name="peso" placeholder="Ej: 2.5 o 2,5" required>
                         <span class="input-group-text">kg</span>
                     </div>
+                    <div class="error-message" id="error-peso"></div>
                 </div>
 
                 <!-- Granos -->
@@ -48,6 +50,7 @@
                         <input type="text" class="form-control" name="granos" placeholder="Ej: 150.5 o 150,5" required>
                         <span class="input-group-text">g / día</span>
                     </div>
+                    <div class="error-message" id="error-granos"></div>
                 </div>
 
                 <!-- Algas -->
@@ -57,6 +60,7 @@
                         <input type="text" class="form-control" name="algas" placeholder="Ej: 50.0 o 50,0" required>
                         <span class="input-group-text">g / día</span>
                     </div>
+                    <div class="error-message" id="error-algas"></div>
                 </div>
             </div>
 
@@ -70,6 +74,7 @@
                 </div>
                 {% endfor %}
             </div>
+            <div class="error-message" id="error-dias"></div>
 
             <!-- Mensajes de error/éxito -->
             <div id="mensaje-alerta" class="alert" style="display: none;" role="alert">
@@ -322,8 +327,19 @@ document.getElementById("form-raciones").addEventListener("submit", async functi
         const result = await response.json();
         
         if (result.success === false) {
-            // Errores de validación
-            mostrarMensaje('error', result.errors.join('<br>'));
+            // Limpiar errores anteriores
+            document.querySelectorAll('.error-message').forEach(el => {
+                el.innerHTML = '';
+                el.style.display = 'none';
+            });
+            // Mostrar errores por campo
+            for (const [field, message] of Object.entries(result.errors)) {
+                const errorDiv = document.getElementById(`error-${field}`);
+                if (errorDiv) {
+                    errorDiv.innerHTML = message;
+                    errorDiv.style.display = 'block';
+                }
+            }
             return; // No continuar
         }
         
@@ -333,6 +349,12 @@ document.getElementById("form-raciones").addEventListener("submit", async functi
         }
         
         console.log("Guardado en DB con ID:", result.id);
+        
+        // Limpiar errores
+        document.querySelectorAll('.error-message').forEach(el => {
+            el.innerHTML = '';
+            el.style.display = 'none';
+        });
         
         // Mostrar mensaje de éxito
         const mensajeExito = document.getElementById("mensaje-exito");
