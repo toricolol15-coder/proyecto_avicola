@@ -182,17 +182,34 @@ class RegistroUsuario(models.Model):
 # ------------------------------
 #   🔥 TU TABLA DE REGISTROS
 # ------------------------------
+from django.core.validators import MinValueValidator, MaxValueValidator
+
 class RegistroRacion(models.Model):
     tipo_animal = models.CharField(max_length=50)
     peso = models.DecimalField(max_digits=6, decimal_places=2)
-    granos = models.DecimalField(max_digits=6, decimal_places=2)
-    algas = models.DecimalField(max_digits=6, decimal_places=2)
+
+    granos = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        validators=[
+            MaxValueValidator(9999.99, message="El valor de Granos debe ser menor a 10.000.")
+        ]
+    )
+
+    algas = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        validators=[
+            MaxValueValidator(9999.99, message="El valor de Algas debe ser menor a 10.000.")
+        ]
+    )
+
+
     dias = models.CharField(max_length=60)
     creado_en = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.tipo_animal} - {self.peso}kg"
-
 
 class ProduccionHuevos(models.Model):
     TIPO_HUEVO_CHOICES = [
